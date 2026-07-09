@@ -327,19 +327,19 @@
   <div class="card" style="margin-top:16px">
     <div class="hd"><h2>🔎 Verificador de cobertura do cliente</h2>
       <div class="segbtns" id="chkSeg">
-        <button data-mode="addr" class="active">Por endereço / CEP</button>
+        <button data-mode="addr" class="active">Por CEP</button>
         <button data-mode="city">Por cidade</button>
       </div>
     </div>
     <div class="bd">
-      <!-- ENDEREÇO / CEP: calcula a distância real (raio de 50 km) -->
+      <!-- CEP: calcula a distância real (raio de 50 km) -->
       <div id="chkAddrBox">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div class="fld" style="flex:1;min-width:240px"><label>Endereço ou CEP do cliente</label>
-            <input id="chkAddr" placeholder="Ex.: 11015-020  ·  ou  ·  Rua XV de Novembro, Santos SP"></div>
-          <button class="btn primary" id="chkAddrBtn">📍 Buscar oficina no raio de 50&nbsp;km</button>
+          <div class="fld" style="flex:1;min-width:260px"><label>CEP de pernoite da apólice</label>
+            <input id="chkAddr" inputmode="numeric" maxlength="9" placeholder="Ex.: 11015-020"></div>
+          <button class="btn primary" id="chkAddrBtn">Verificar</button>
         </div>
-        <span class="hint">Calcula a <b>distância real</b> do endereço até cada oficina ativa. Requer conexão com a internet (geolocalização). O CEP costuma dar o resultado mais preciso.</span>
+        <span class="hint">Calcula a <b>distância real</b> do CEP de pernoite da apólice até cada oficina ativa e indica se está dentro do raio de 50&nbsp;km. Requer conexão com a internet.</span>
       </div>
       <!-- CIDADE: busca instantânea na área de abrangência (offline) -->
       <div id="chkCityBox" style="display:none">
@@ -722,14 +722,13 @@ async function checkByAddress(){
   const btn = $("#chkAddrBtn"); const orig = btn.innerHTML;
   btn.disabled=true; btn.textContent="Buscando…";
   res.className="result show"; res.removeAttribute("style");
-  res.innerHTML = '<div class="hint">🔄 Localizando o endereço do cliente…</div>';
+  res.innerHTML = '<div class="hint">🔄 Localizando o CEP de pernoite…</div>';
   try{
     const client = await geocode(input);
     if(!client){
       res.className="result show no";
-      res.innerHTML = `<h3>⚠️ Não foi possível localizar o endereço</h3>
-        <div>Confira o CEP ou o endereço digitado e tente novamente. Esta busca precisa de conexão com a internet.</div>
-        <div class="hint" style="margin-top:8px">Dica: informar o <b>CEP</b> costuma dar o resultado mais preciso.</div>`;
+      res.innerHTML = `<h3>⚠️ Não foi possível localizar o CEP</h3>
+        <div>Confira o CEP de pernoite digitado e tente novamente. Esta busca precisa de conexão com a internet.</div>`;
       return;
     }
     const active = state.workshops.filter(w=>w.active);
@@ -741,7 +740,7 @@ async function checkByAddress(){
     let done=0;
     const geos = await mapPool(active, 6, async w=>{
       const g = await geocodeWorkshop(w);
-      done++; res.innerHTML = `<div class="hint">📍 Cliente localizado. Calculando distância às oficinas (${done}/${active.length})…</div>`;
+      done++; res.innerHTML = `<div class="hint">📍 CEP localizado. Calculando distância às oficinas (${done}/${active.length})…</div>`;
       return g ? {w, dist:haversineKm(client,g)} : null;
     });
     const results = geos.filter(Boolean).sort((a,b)=>a.dist-b.dist);
@@ -750,17 +749,17 @@ async function checkByAddress(){
     if(within.length){
       res.className="result show ok";
       res.innerHTML = `<h3>✅ Cliente tem acesso ao benefício</h3>
-        <div>${within.length} oficina(s) a até ${RADIUS_KM}&nbsp;km do endereço informado:</div>
+        <div>${within.length} oficina(s) a até ${RADIUS_KM}&nbsp;km do CEP de pernoite:</div>
         <ul>${within.map(r=>`<li><b>${esc(r.w.nome)}</b> — ${r.dist.toFixed(1)} km · ${esc(r.w.cidade)}${r.w.estado?'/'+esc(r.w.estado):''}</li>`).join("")}</ul>
-        <div class="hint" style="margin-top:8px">Endereço localizado: ${esc(client.label||input)}</div>`;
+        <div class="hint" style="margin-top:8px">Local (pernoite): ${esc(client.label||input)}</div>`;
     } else {
       const n = results[0];
       res.className="result show no";
       res.innerHTML = `<h3>❌ Cliente fora do raio de ${RADIUS_KM}&nbsp;km</h3>
-        <div>Nenhuma oficina ativa a menos de ${RADIUS_KM}&nbsp;km do endereço informado.</div>
+        <div>Nenhuma oficina ativa a menos de ${RADIUS_KM}&nbsp;km do CEP de pernoite.</div>
         ${n?`<div class="hint" style="margin-top:8px">Oficina mais próxima: <b>${esc(n.w.nome)}</b> — ${n.dist.toFixed(1)} km (${esc(n.w.cidade)}${n.w.estado?'/'+esc(n.w.estado):''}).</div>`:''}
         ${failed?`<div class="hint">⚠️ ${failed} oficina(s) não puderam ser geolocalizadas.</div>`:''}
-        <div class="hint">Endereço localizado: ${esc(client.label||input)}</div>`;
+        <div class="hint">Local (pernoite): ${esc(client.label||input)}</div>`;
     }
   }catch(e){
     res.className="result show no";
@@ -864,6 +863,10 @@ function bind(){
   $("#chkBtn").addEventListener("click", checkCity);
   $("#chkCity").addEventListener("keydown", e=>{ if(e.key==="Enter") checkCity(); });
   $("#chkAddrBtn").addEventListener("click", checkByAddress);
+  $("#chkAddr").addEventListener("input", e=>{
+    const d=e.target.value.replace(/\D/g,"").slice(0,8);
+    e.target.value = d.length>5 ? d.slice(0,5)+"-"+d.slice(5) : d;
+  });
   $("#chkAddr").addEventListener("keydown", e=>{ if(e.key==="Enter") checkByAddress(); });
   $("#chkSeg").addEventListener("click", e=>{
     const b=e.target.closest("button"); if(!b) return;
