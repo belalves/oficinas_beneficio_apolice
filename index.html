@@ -229,13 +229,39 @@
         ⬆️ Carregar planilha
         <input type="file" id="fileInput" accept=".xlsx,.xls">
       </label>
-      <button class="btn" id="exportBtn">⬇️ Exportar</button>
       <button class="btn danger" id="resetBtn" title="Descartar alterações e voltar à base">↺ Restaurar</button>
       <button class="btn ghost sm" id="themeBtn" title="Alternar tema">🌓</button>
     </div>
   </header>
 
   <section class="kpis" id="kpis"></section>
+
+  <!-- UNIFIED: atualizações no sistema (distância real) + exportar planilha -->
+  <div class="card" id="sysCard" style="margin-bottom:16px">
+    <div class="hd">
+      <h2>🔁 Atualizações no sistema <span class="hint" style="font-weight:500">· raio real de 50&nbsp;km</span></h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="segbtns" id="diffSeg">
+          <button data-mode="all" class="active">Tudo</button>
+          <button data-mode="inc">Incluir</button>
+          <button data-mode="rem">Retirar</button>
+        </div>
+        <button class="btn sm" id="recalcBtn" title="Recalcular por distância real">↻ Recalcular</button>
+        <button class="btn primary sm" id="batchBtn">⬇️ Baixar planilha (.xlsx)</button>
+      </div>
+    </div>
+    <div class="bd">
+      <div class="hint" style="margin-bottom:10px">
+        Distância real (Haversine) entre <b>cada município do Brasil</b> e as oficinas ativas — mesma regra do arquivo exportado.
+        <b style="color:var(--good-ink)">Incluir</b> = município no raio de 50&nbsp;km ainda fora do sistema ·
+        <b style="color:var(--crit-ink)">Retirar</b> = cidade do sistema fora do raio.
+        O que aparece aqui é exatamente o que sai na planilha (abas <b>Sistemas</b> + <b>Conferência</b>); a aba <b>Regiões</b> não é alterada.
+      </div>
+      <div id="sysStatus" class="hint" style="margin-bottom:10px"></div>
+      <div id="diffBody"></div>
+      <div class="result" id="batchResult"></div>
+    </div>
+  </div>
 
   <div class="grid2">
     <!-- LEFT: workshops -->
@@ -284,41 +310,18 @@
       </div>
     </div>
 
-    <!-- RIGHT: results -->
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <!-- diff -->
-      <div class="card">
-        <div class="hd">
-          <h2>🔁 Atualizações no sistema</h2>
-          <div class="segbtns" id="diffSeg">
-            <button data-mode="all" class="active">Tudo</button>
-            <button data-mode="inc">Incluir</button>
-            <button data-mode="rem">Retirar</button>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="hint" style="margin-bottom:10px">
-            Compara as cidades elegíveis (oficinas ativas) com as já cadastradas no sistema.
-            <b style="color:var(--good-ink)">Incluir</b> = passou a ter cobertura ·
-            <b style="color:var(--crit-ink)">Retirar</b> = deixou de ter oficina no raio.
-          </div>
-          <div id="diffBody"></div>
-        </div>
+    <!-- RIGHT: cidades elegíveis -->
+    <div class="card">
+      <div class="hd">
+        <h2>✅ Cidades elegíveis <span class="hint" style="font-weight:500">· no raio de 50&nbsp;km</span></h2>
+        <span class="hint" id="eligCount"></span>
       </div>
-
-      <!-- eligible -->
-      <div class="card">
-        <div class="hd">
-          <h2>✅ Cidades elegíveis</h2>
-          <span class="hint" id="eligCount"></span>
+      <div class="bd">
+        <div class="search" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="eligSearch" placeholder="Buscar cidade elegível…">
         </div>
-        <div class="bd">
-          <div class="search" style="margin-bottom:10px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <input id="eligSearch" placeholder="Buscar cidade elegível…">
-          </div>
-          <div id="eligBody"></div>
-        </div>
+        <div id="eligBody"></div>
       </div>
     </div>
   </div>
@@ -353,23 +356,6 @@
       </div>
       <datalist id="cityList"></datalist>
       <div class="result" id="chkResult"></div>
-    </div>
-  </div>
-
-  <!-- BATCH: validar e atualizar planilha por distância real -->
-  <div class="card" style="margin-top:16px">
-    <div class="hd"><h2>⚙️ Validar e atualizar a planilha (distância real)</h2>
-      <span class="hint">Gera a planilha com as colunas Incluir/Retirar preenchidas.</span></div>
-    <div class="bd">
-      <div class="hint" style="margin-bottom:12px">
-        Calcula a distância real (raio de 50&nbsp;km) entre <b>cada município do Brasil</b> e as oficinas ativas
-        (ponto da oficina pelo <b>CEP</b>, com o centro da cidade como reserva) e devolve a <b>mesma planilha</b>
-        com a aba <b>Sistemas</b> atualizada:
-        <b style="color:var(--good-ink)">Incluir</b> = município no raio que ainda não está no sistema ·
-        <b style="color:var(--crit-ink)">Retirar</b> = cidade do sistema fora do raio. Formato das células: <code>DD/MM - Cidade (UF)</code>.
-      </div>
-      <button class="btn primary" id="batchBtn">⬇️ Gerar planilha atualizada (.xlsx)</button>
-      <div class="result" id="batchResult"></div>
     </div>
   </div>
 
@@ -504,16 +490,13 @@ function computeDiff(){
 function renderKPIs(){
   const active = state.workshops.filter(w=>w.active).length;
   const total = state.workshops.length;
-  const {allCities} = computeEligible();
-  const diff = computeDiff();
-  const inc = diff.reduce((a,r)=>a+r.incluir.length,0);
-  const rem = diff.reduce((a,r)=>a+r.retirar.length,0);
+  const d = v => SYS.computed ? v : "…";
   const k = [
     {c:"brand", lab:"Oficinas ativas", val:active, cap:`de ${total} cadastradas`},
-    {c:"brand", lab:"Cidades elegíveis", val:allCities.size, cap:"cobertas por oficina ativa"},
-    {c:"good", lab:"Cidades a incluir", val:inc, cap:"passaram a ter cobertura"},
-    {c:"crit", lab:"Cidades a retirar", val:rem, cap:"sem oficina no raio"},
-    {c:"brand", lab:"Estados atendidos", val:new Set(state.workshops.filter(w=>w.active).map(w=>stateFullName(w.estado))).size, cap:"com oficina ativa"},
+    {c:"brand", lab:"Cidades elegíveis", val:d(SYS.totCovered), cap:"no raio de 50 km"},
+    {c:"good", lab:"Cidades a incluir", val:d(SYS.totInc), cap:"no raio, fora do sistema"},
+    {c:"crit", lab:"Cidades a retirar", val:d(SYS.totRem), cap:"no sistema, fora do raio"},
+    {c:"brand", lab:"Estados atendidos", val:d(SYS.computed?SYS.coverage.size:0), cap:"com município no raio"},
   ];
   $("#kpis").innerHTML = k.map(x=>`<div class="kpi ${x.c}"><span class="bar"></span>
     <div class="lab">${x.lab}</div><div class="val">${x.val}</div><div class="cap">${x.cap}</div></div>`).join("");
@@ -547,14 +530,20 @@ function renderWorkshops(){
 }
 
 function renderDiff(){
-  const mode = $("#diffSeg .active").dataset.mode;
-  const rows = computeDiff().filter(r=>{
-    if(mode==="inc") return r.incluir.length;
-    if(mode==="rem") return r.retirar.length;
-    return r.incluir.length||r.retirar.length;
+  const seg = $("#diffSeg .active"); const mode = seg ? seg.dataset.mode : "all";
+  const body = $("#diffBody");
+  if(SYS.busy && !SYS.computed){ body.innerHTML = `<div class="empty">🔄 Calculando distâncias…</div>`; return; }
+  if(!SYS.computed){ body.innerHTML = `<div class="empty">Clique em ↻ Recalcular.</div>`; return; }
+  const rows = [];
+  SYS.order.forEach(estado=>{
+    const r = SYS.results.get(estado); if(!r) return;
+    if(mode==="inc" && !r.incluir.length) return;
+    if(mode==="rem" && !r.retirar.length) return;
+    if(mode==="all" && !r.incluir.length && !r.retirar.length) return;
+    rows.push({estado, incluir:r.incluir, retirar:r.retirar});
   });
   if(!rows.length){
-    $("#diffBody").innerHTML = `<div class="empty">Nenhuma atualização pendente — o sistema está alinhado às oficinas ativas.</div>`;
+    $("#diffBody").innerHTML = `<div class="empty">Nenhuma atualização pendente para este filtro.</div>`;
     return;
   }
   $("#diffBody").innerHTML = rows.map(r=>{
@@ -577,13 +566,15 @@ function renderDiff(){
 
 function renderEligible(){
   const q = norm($("#eligSearch").value);
-  const {byState, allCities} = computeEligible();
-  $("#eligCount").textContent = `${allCities.size} cidades`;
-  const states = Array.from(byState.keys()).sort();
+  const body = $("#eligBody");
+  if(!SYS.computed){ $("#eligCount").textContent=""; body.innerHTML=`<div class="empty">${SYS.busy?'🔄 Calculando…':''}</div>`; return; }
+  $("#eligCount").textContent = `${SYS.totCovered} cidades`;
+  const groups = [];
+  SYS.coverage.forEach((m,uf)=>groups.push([UF_NAME[uf]||uf, m]));
+  groups.sort((a,b)=>a[0]<b[0]?-1:1);
   let html="", any=false;
-  for(const st of states){
-    const m = byState.get(st);
-    let cities = Array.from(m.values()).map(v=>v.city).sort();
+  for(const [st,m] of groups){
+    let cities = Array.from(m.values()).sort();
     if(q) cities = cities.filter(c=>norm(c).includes(q));
     if(!cities.length) continue;
     any=true;
@@ -596,15 +587,20 @@ function renderEligible(){
 }
 
 function renderCityList(){
-  const {allCities} = computeEligible();
-  const opts = Array.from(allCities.values()).map(v=>v.city).sort();
-  $("#cityList").innerHTML = opts.map(c=>`<option value="${esc(c)}">`).join("");
+  if(!SYS.computed) return;
+  const set = new Set();
+  SYS.coverage.forEach(m=>m.forEach(p=>set.add(p)));
+  $("#cityList").innerHTML = Array.from(set).sort().map(c=>`<option value="${esc(c)}">`).join("");
 }
 
+function renderComputed(){
+  renderKPIs(); renderDiff(); renderEligible(); renderCityList(); renderSysStatus();
+}
 function renderAll(){
-  renderKPIs(); renderWorkshops(); renderDiff(); renderEligible(); renderCityList();
+  renderWorkshops(); renderKPIs(); renderSysStatus();
   $("#baseTag").textContent = "Base: "+state.baseLabel;
   persist();
+  scheduleRecompute();
 }
 
 /* ============================ ACTIONS ============================ */
@@ -641,25 +637,23 @@ function checkCity(){
   const uf = $("#chkUf").value;
   const res = $("#chkResult");
   if(!cityRaw){ res.className="result"; return; }
+  if(!SYS.computed){ res.className="result show"; res.removeAttribute("style"); res.innerHTML='<div class="hint">🔄 Calculando… tente novamente em instantes.</div>'; return; }
   const k = norm(cityRaw);
-  const {allCities} = computeEligible();
-  const hit = allCities.get(k);
-  // system membership
-  const targetFull = uf ? stateFullName(uf) : null;
+  let coveredUFs=[];
+  SYS.coverage.forEach((m,cuf)=>{ if(m.has(k)) coveredUFs.push(cuf); });
+  const covered = uf ? coveredUFs.includes(uf) : coveredUFs.length>0;
   let inSystem=false, sysStates=[];
   state.system.forEach(s=>{ if(s.cidades.some(c=>norm(c)===k)){ inSystem=true; sysStates.push(s.estado);} });
-  if(hit){
-    const ws = Array.from(new Set(hit.workshops));
+  if(covered){
     res.className="result show ok";
     res.innerHTML = `<h3>✅ ${esc(cityRaw.toUpperCase())} tem o benefício</h3>
-      <div>Está dentro do raio de 50&nbsp;km de ${ws.length} oficina(s) ativa(s):</div>
-      <ul>${ws.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>
+      <div>Está dentro do raio de 50&nbsp;km de uma oficina ativa${coveredUFs.length?` (${esc(coveredUFs.join(", "))})`:''}.</div>
       <div class="hint" style="margin-top:8px">${inSystem?'Já consta no sistema.':'⚠️ Ainda não consta no sistema — deve ser <b>incluída</b>.'}</div>`;
   } else {
     res.className="result show no";
     res.innerHTML = `<h3>❌ ${esc(cityRaw.toUpperCase())} não tem cobertura</h3>
-      <div>Nenhuma oficina ativa cobre esta cidade dentro do raio de 50&nbsp;km.</div>
-      <div class="hint" style="margin-top:8px">${inSystem?`⚠️ Consta no sistema (${sysStates.join(", ")}) mas <b>não há oficina no raio</b> — candidata a ser <b>retirada</b>.`:'Não consta no sistema e não é elegível.'}</div>`;
+      <div>Nenhuma oficina ativa dentro do raio de 50&nbsp;km.</div>
+      <div class="hint" style="margin-top:8px">${inSystem?`⚠️ Consta no sistema (${esc(sysStates.join(", "))}) mas <b>fora do raio</b> — candidata a ser <b>retirada</b>.`:'Não consta no sistema e não é elegível.'}</div>`;
   }
 }
 
@@ -804,10 +798,16 @@ function initMunicipios(){
 async function workshopPoint(w){
   const cep = cleanCEP(w.cep);
   if(cep){
+    const ck = "cep:"+cep;
+    if(geoCache[ck] && geoCache[ck].lat!=null) return {lat:geoCache[ck].lat, lon:geoCache[ck].lon, src:"CEP"};
     try{
       const j = await fetchJSON("https://brasilapi.com.br/api/cep/v2/"+cep, 6000);
       const c = j && j.location && j.location.coordinates;
-      if(c && c.latitude) return {lat:+c.latitude, lon:+c.longitude, src:"CEP"};
+      if(c && c.latitude){
+        const r = {lat:+c.latitude, lon:+c.longitude, label:[j.street,j.neighborhood,j.city,j.state].filter(Boolean).join(", ")};
+        geoCache[ck]=r; saveGeoCache();
+        return {lat:r.lat, lon:r.lon, src:"CEP"};
+      }
     }catch(e){}
   }
   const m = MUNI_INDEX.get(norm(w.cidade)+"|"+(w.estado||""));
@@ -834,6 +834,95 @@ function computeCoverage(points){
   }
   return byUF;
 }
+/* ---- estado computado compartilhado: painel "Atualizações" e exportação usam o MESMO cálculo ---- */
+function today(){ const d=new Date(); return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0"); }
+const wptCache = new Map();
+function wkey(w){ return (cleanCEP(w.cep)||"")+"|"+norm(w.cidade)+"|"+(w.estado||""); }
+async function workshopPointCached(w){
+  const k = wkey(w);
+  let base;
+  if(wptCache.has(k)) base = wptCache.get(k);
+  else { base = await workshopPoint(w); wptCache.set(k, base); }
+  if(!base) return null;
+  return {lat:base.lat, lon:base.lon, src:base.src, nome:w.nome};
+}
+function buildResults(coverage, points){
+  const sysByState = new Map(state.system.map(s=>[s.estado, s.cidades]));
+  const order = state.system.map(s=>s.estado);
+  const extra = [];
+  coverage.forEach((_,uf)=>{ const full = UF_NAME[uf]||uf; if(!sysByState.has(full)) extra.push(full); });
+  extra.sort().forEach(f=>order.push(f));
+  const results = new Map();
+  const conf = [["Estado","Cidade","UF","Distância até a oficina mais próxima (km)","Oficina mais próxima","Situação","Ação sugerida"]];
+  const rnd = d => (isFinite(d) ? Math.round(d*10)/10 : "");
+  let totInc=0, totRem=0, totNao=0;
+  for(const estado of order){
+    const uf = NAME_UF[estado] || "";
+    const covered = coverage.get(uf) || new Map();
+    const cidades = sysByState.get(estado) || [];
+    const sysNorm = new Map(cidades.map(c=>[norm(c), c]));
+    const incluir=[], retirar=[], nao=[];
+    sysNorm.forEach((orig, nkey)=>{
+      const m = MUNI_INDEX.get(nkey+"|"+uf);
+      if(!m){ nao.push(orig); conf.push([estado, orig, uf, "", "", "Não localizada na base", "Manter (revisar nome)"]); return; }
+      const nr = nearestWorkshop({lat:m.lat, lon:m.lon}, points);
+      if(covered.has(nkey)) conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Manter"]);
+      else { retirar.push(orig); conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Fora do raio (>50 km)", "Retirar"]); }
+    });
+    covered.forEach((proper, nkey)=>{
+      if(sysNorm.has(nkey)) return;
+      incluir.push(proper);
+      const m = MUNI_INDEX.get(nkey+"|"+uf);
+      const nr = m ? nearestWorkshop({lat:m.lat, lon:m.lon}, points) : {dist:Infinity, nome:""};
+      conf.push([estado, proper, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Incluir"]);
+    });
+    incluir.sort(); retirar.sort();
+    results.set(estado, {incluir, retirar, nao, cidades, uf, isNew:!sysByState.has(estado)});
+    totInc+=incluir.length; totRem+=retirar.length; totNao+=nao.length;
+  }
+  return {results, order, conf, totInc, totRem, totNao};
+}
+let SYS = { computed:false, busy:false, at:null, results:new Map(), order:[], conf:[], coverage:new Map(), points:[], totInc:0, totRem:0, totNao:0, totCovered:0, srcCount:{CEP:0,cidade:0}, offline:false };
+let _recomputing=false, _dirty=false, _recalcTimer=null;
+function scheduleRecompute(){
+  if(!MUNI_LIST.length) return;
+  SYS.busy=true; renderSysStatus();
+  const b=$("#diffBody"); if(b && !SYS.computed) b.innerHTML = `<div class="empty">🔄 Calculando distâncias…</div>`;
+  clearTimeout(_recalcTimer);
+  _recalcTimer = setTimeout(recomputeSystem, 100);
+}
+async function recomputeSystem(){
+  if(!MUNI_LIST.length) return;
+  if(_recomputing){ _dirty=true; return; }
+  _recomputing=true;
+  try{
+    do{
+      _dirty=false;
+      SYS.busy=true; renderSysStatus();
+      const active = state.workshops.filter(w=>w.active);
+      const geos = await mapPool(active, 8, w=>workshopPointCached(w));
+      const points = geos.filter(Boolean);
+      const src={CEP:0,cidade:0}; points.forEach(p=>{ src[p.src]=(src[p.src]||0)+1; });
+      const coverage = computeCoverage(points);
+      const built = buildResults(coverage, points);
+      let totCovered=0; coverage.forEach(m=>totCovered+=m.size);
+      SYS = {computed:true, busy:false, at:new Date(),
+        results:built.results, order:built.order, conf:built.conf, coverage, points,
+        totInc:built.totInc, totRem:built.totRem, totNao:built.totNao, totCovered,
+        srcCount:src, offline:(src.CEP===0 && src.cidade>0)};
+    }while(_dirty);
+  }catch(e){ console.error(e); SYS.busy=false; }
+  finally{ _recomputing=false; renderComputed(); }
+}
+function renderSysStatus(){
+  const el = $("#sysStatus"); if(!el) return;
+  if(SYS.busy && !SYS.computed){ el.innerHTML = '🔄 Calculando distâncias para todos os municípios…'; return; }
+  if(!SYS.computed){ el.innerHTML=''; return; }
+  const t = SYS.at ? SYS.at.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+  const busy = SYS.busy ? ' · 🔄 recalculando…' : '';
+  const off = SYS.offline ? ' · ⚠️ oficinas localizadas pelo centro da cidade (CEP indisponível)' : '';
+  el.innerHTML = `Calculado às ${t} · <b>${SYS.points.length}</b> oficinas · <b style="color:var(--good-ink)">${SYS.totInc}</b> a incluir · <b style="color:var(--crit-ink)">${SYS.totRem}</b> a retirar${off}${busy}`;
+}
 async function generateValidatedXLSX(){
   const box = $("#batchResult"); const btn = $("#batchBtn");
   if(typeof XLSX==="undefined"){ toast("Leitor de planilha indisponível (sem internet)."); return; }
@@ -842,69 +931,22 @@ async function generateValidatedXLSX(){
   box.className="result show"; box.removeAttribute("style");
   if(!active.length){ box.className="result show no"; box.innerHTML="<h3>❌ Nenhuma oficina ativa</h3><div>Ative ao menos uma oficina.</div>"; return; }
   btn.disabled=true;
+  box.innerHTML = '<div class="hint">🔄 Preparando planilha…</div>';
   try{
-    const src={CEP:0, cidade:0}; let done=0;
-    box.innerHTML=`<div class="hint">📍 Localizando oficinas (0/${active.length})…</div>`;
-    const geos = await mapPool(active, 8, async w=>{
-      const p = await workshopPoint(w);
-      if(p) p.nome = w.nome;
-      done++; box.innerHTML=`<div class="hint">📍 Localizando oficinas (${done}/${active.length})…</div>`;
-      return p;
-    });
-    const points = geos.filter(Boolean);
-    points.forEach(p=>{ src[p.src]=(src[p.src]||0)+1; });
-    if(!points.length){ box.className="result show no"; box.innerHTML="<h3>❌ Não foi possível localizar as oficinas</h3>"; return; }
-    box.innerHTML='<div class="hint">📐 Calculando distâncias para '+MUNI_LIST.length.toLocaleString('pt-BR')+' municípios…</div>';
-    await sleep(20);
-    const coverage = computeCoverage(points);
-    const d=new Date();
-    const pref = String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
-    const sysByState = new Map(state.system.map(s=>[s.estado, s.cidades]));
-    const order = state.system.map(s=>s.estado);
-    const extra = [];
-    coverage.forEach((_,uf)=>{ const full = UF_NAME[uf]||uf; if(!sysByState.has(full)) extra.push(full); });
-    extra.sort().forEach(f=>order.push(f));
-    const results = new Map(); let totInc=0, totRem=0, totNao=0;
-    const conf = [["Estado","Cidade","UF","Distância até a oficina mais próxima (km)","Oficina mais próxima","Situação","Ação sugerida"]];
-    const rnd = d => (isFinite(d) ? Math.round(d*10)/10 : "");
-    for(const estado of order){
-      const uf = NAME_UF[estado] || "";
-      const covered = coverage.get(uf) || new Map();
-      const cidades = sysByState.get(estado) || [];
-      const sysNorm = new Map(cidades.map(c=>[norm(c), c]));
-      const incluir=[], retirar=[], nao=[];
-      // cidades já no sistema: valida cada uma
-      sysNorm.forEach((orig, nkey)=>{
-        const m = MUNI_INDEX.get(nkey+"|"+uf);
-        if(!m){ nao.push(orig); conf.push([estado, orig, uf, "", "", "Não localizada na base", "Manter (revisar nome)"]); return; }
-        const nr = nearestWorkshop({lat:m.lat, lon:m.lon}, points);
-        if(covered.has(nkey)) conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Manter"]);
-        else { retirar.push(`${pref} - ${orig} (${uf})`); conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Fora do raio (>50 km)", "Retirar"]); }
-      });
-      // municípios no raio que ainda não estão no sistema: incluir
-      covered.forEach((proper, nkey)=>{
-        if(sysNorm.has(nkey)) return;
-        incluir.push(`${pref} - ${proper} (${uf})`);
-        const m = MUNI_INDEX.get(nkey+"|"+uf);
-        const nr = m ? nearestWorkshop({lat:m.lat, lon:m.lon}, points) : {dist:Infinity, nome:""};
-        conf.push([estado, proper, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Incluir"]);
-      });
-      results.set(estado, {incluir, retirar, nao, cidades, isNew:!sysByState.has(estado)});
-      totInc+=incluir.length; totRem+=retirar.length; totNao+=nao.length;
-    }
-    const wb = buildWorkbook(results, order, conf);
+    if(!SYS.computed) await recomputeSystem();
+    const wb = buildWorkbook(SYS.results, SYS.order, SYS.conf);
     const base = /\.xlsx?$/i.test(state.baseLabel) ? state.baseLabel.replace(/\.xlsx?$/i,"") : "planilha";
     const fname = base+"_atualizada.xlsx";
     XLSX.writeFile(wb, fname);
     box.className="result show ok";
     box.innerHTML = `<h3>✅ Planilha gerada</h3>
-      <div>Oficinas localizadas: <b>${points.length}</b> (${src.CEP||0} por CEP, ${src.cidade||0} pelo centro da cidade).</div>
+      <div>Oficinas localizadas: <b>${SYS.points.length}</b> (${SYS.srcCount.CEP||0} por CEP, ${SYS.srcCount.cidade||0} pelo centro da cidade).</div>
       <ul>
-        <li><b>${totInc}</b> cidades a <b style="color:var(--good-ink)">incluir</b></li>
-        <li><b>${totRem}</b> cidades a <b style="color:var(--crit-ink)">retirar</b></li>
-        ${totNao?`<li>${totNao} cidade(s) do sistema não encontradas na base de municípios (mantidas — revise o nome).</li>`:''}
+        <li><b>${SYS.totInc}</b> cidades a <b style="color:var(--good-ink)">incluir</b></li>
+        <li><b>${SYS.totRem}</b> cidades a <b style="color:var(--crit-ink)">retirar</b></li>
+        ${SYS.totNao?`<li>${SYS.totNao} cidade(s) do sistema não encontradas na base (mantidas — revise o nome).</li>`:''}
       </ul>
-      <div class="hint">Arquivo <b>${esc(fname)}</b> baixado. A aba <b>Sistemas</b> foi atualizada (Incluir/Retirar, formato <code>${pref} - Cidade (UF)</code>) e a aba <b>Conferência</b> traz cada cidade com a distância em km até a oficina mais próxima.</div>`;
+      <div class="hint">Arquivo <b>${esc(fname)}</b> baixado. Aba <b>Sistemas</b> (Incluir/Retirar, formato <code>${today()} - Cidade (UF)</code>) e aba <b>Conferência</b> (distância km). A aba <b>Regiões</b> não foi alterada.</div>`;
   }catch(e){
     box.className="result show no";
     box.innerHTML=`<h3>⚠️ Erro ao gerar a planilha</h3><div>${esc(e.message)}</div>`;
@@ -926,6 +968,8 @@ function updateSistemasSheet(ws, results, order){
   let incCol = colOf(ws, range, ["INCLUIR"]); if(incCol<0) incCol=3;
   let remCol = colOf(ws, range, ["RETIRAR"]); if(remCol<0) remCol=4;
   setCell(ws, hr, incCol, "Incluir"); setCell(ws, hr, remCol, "Retirar");
+  const pref = today();
+  const fmt = (arr, uf) => (arr||[]).map(c=>`${pref} - ${c} (${uf})`).join("\n");
   const byName = new Map(); results.forEach((v,k)=>byName.set(norm(k), v));
   const written = new Set();
   let lastDataR = hr;
@@ -934,8 +978,8 @@ function updateSistemasSheet(ws, results, order){
     if(!ec || ec.v==null || ec.v==="") continue;
     lastDataR = r;
     const key = norm(ec.v); const res = byName.get(key); if(!res) continue;
-    setCell(ws, r, incCol, res.incluir.join("\n"));
-    setCell(ws, r, remCol, res.retirar.join("\n"));
+    setCell(ws, r, incCol, fmt(res.incluir, res.uf));
+    setCell(ws, r, remCol, fmt(res.retirar, res.uf));
     written.add(key);
   }
   // acrescenta linhas para estados cobertos que não existiam na aba (logo após a última linha preenchida)
@@ -946,8 +990,8 @@ function updateSistemasSheet(ws, results, order){
     lastR++;
     setCell(ws, lastR, estCol, estado);
     setCell(ws, lastR, cidCol, (res.cidades||[]).join(", "));
-    setCell(ws, lastR, incCol, res.incluir.join("\n"));
-    setCell(ws, lastR, remCol, res.retirar.join("\n"));
+    setCell(ws, lastR, incCol, fmt(res.incluir, res.uf));
+    setCell(ws, lastR, remCol, fmt(res.retirar, res.uf));
     written.add(norm(estado));
   });
   const endC = Math.max(range.e.c, cidCol, incCol, remCol);
@@ -959,9 +1003,12 @@ function reconstructWorkbook(results, order){
   state.workshops.forEach(w=>regAoa.push([w.cod||"",w.nome,(w.coverage||[]).join(", "),w.endereco||"",w.bairro||"",w.cidade||"",w.estado||"",w.cep||"",w.macro||"",w.micro||"",w.razao||"",w.cnpj||""]));
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(regAoa), "Regiões");
   const sysAoa = [["Estado","Cidades","","Incluir","Retirar"]];
+  const pref = today();
+  const fmt = (arr, uf) => (arr||[]).map(c=>`${pref} - ${c} (${uf})`).join("\n");
   (order || Array.from(results.keys())).forEach(estado=>{
     const r = results.get(estado) || {incluir:[],retirar:[],cidades:[]};
-    sysAoa.push([estado, (r.cidades||[]).join(", "), "", r.incluir.join("\n"), r.retirar.join("\n")]);
+    const uf = r.uf || NAME_UF[estado] || "";
+    sysAoa.push([estado, (r.cidades||[]).join(", "), "", fmt(r.incluir, uf), fmt(r.retirar, uf)]);
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sysAoa), "Sistemas");
   return wb;
@@ -1062,6 +1109,7 @@ function importXLSX(file){
         }
       }
       if(!workshops.length){ toast("Não encontrei oficinas na aba Regiões."); return; }
+      wptCache.clear(); SYS.computed=false;
       loadBase({workshops,system}, file.name);
       renderAll();
       toast(`Planilha carregada: ${workshops.length} oficinas, ${system.length} estados`);
@@ -1100,12 +1148,12 @@ function bind(){
     $("#chkCityBox").style.display = addr?"none":"";
     $("#chkResult").className="result";
   });
-  $("#exportBtn").addEventListener("click", exportCSV);
   $("#batchBtn").addEventListener("click", generateValidatedXLSX);
+  $("#recalcBtn").addEventListener("click", ()=>{ wptCache.clear(); SYS.computed=false; scheduleRecompute(); toast("Recalculando por distância real…"); });
   $("#fileInput").addEventListener("change", e=>{ if(e.target.files[0]) importXLSX(e.target.files[0]); e.target.value=""; });
   $("#resetBtn").addEventListener("click", ()=>{
     if(!confirm("Descartar todas as alterações e voltar à base carregada?")) return;
-    localStorage.removeItem(LS_KEY); loadBase(BASE_DATA,"planilha padrão"); renderAll(); toast("Base restaurada");
+    localStorage.removeItem(LS_KEY); wptCache.clear(); SYS.computed=false; loadBase(BASE_DATA,"planilha padrão"); renderAll(); toast("Base restaurada");
   });
   $("#wsBody").addEventListener("click", e=>{
     const del=e.target.closest("[data-del]"); if(del){ deleteWorkshop(del.dataset.del); return; }
