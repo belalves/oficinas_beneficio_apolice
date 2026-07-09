@@ -34,7 +34,10 @@ Vá ao painel **🔎 Verificador de cobertura do cliente** (rodapé). Há dois m
 | **Carregar planilha** | Importa a planilha base (`.xlsx`) com as abas **Regiões** e **Sistemas**. |
 
 Toda alteração é recalculada em tempo real e salva **no próprio navegador**
-(`localStorage`). Use **↺ Restaurar** para descartar as alterações e voltar à base.
+(`localStorage`). O painel **Atualizações no sistema** pode ser **recolhido/expandido**
+pelo botão **▾** no cabeçalho (e a lista rola dentro de uma altura limitada, para não
+ocupar a tela toda). Use **↺ Restaurar** para **limpar tudo** (oficinas adicionadas,
+planilha carregada e cálculos) e voltar ao estado inicial.
 
 ## Regra de cobertura (raio de 50 km)
 
