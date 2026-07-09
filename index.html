@@ -1,0 +1,756 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard de Cobertura — Oficinas &amp; Benefício da Apólice</title>
+<style>
+  :root{
+    --plane:#f9f9f7; --surface:#ffffff; --surface-2:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --line:#e1e0d9; --ring:rgba(11,11,11,.10);
+    --brand:#2a78d6; --brand-ink:#184f95;
+    --good:#0ca30c; --good-ink:#006300; --good-bg:#e7f6e7;
+    --crit:#d03b3b; --crit-ink:#a41d1d; --crit-bg:#fbe9e9;
+    --warn:#b8860b; --warn-bg:#fbf1d8;
+    --radius:12px; --shadow:0 1px 2px rgba(11,11,11,.04),0 4px 16px rgba(11,11,11,.05);
+    --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#202020;
+      --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+      --line:#2c2c2a; --ring:rgba(255,255,255,.10);
+      --brand:#3987e5; --brand-ink:#9cc4f5;
+      --good:#0ca30c; --good-ink:#5fd35f; --good-bg:#12331a;
+      --crit:#e05a5a; --crit-ink:#f19c9c; --crit-bg:#3a1c1c;
+      --warn:#e5b84a; --warn-bg:#332a12;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"]{
+    --plane:#f9f9f7; --surface:#ffffff; --surface-2:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781; --line:#e1e0d9; --ring:rgba(11,11,11,.10);
+    --brand:#2a78d6; --brand-ink:#184f95; --good:#0ca30c; --good-ink:#006300; --good-bg:#e7f6e7;
+    --crit:#d03b3b; --crit-ink:#a41d1d; --crit-bg:#fbe9e9; --warn:#b8860b; --warn-bg:#fbf1d8;
+  }
+  :root[data-theme="dark"]{
+    --plane:#0d0d0d; --surface:#1a1a19; --surface-2:#202020;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781; --line:#2c2c2a; --ring:rgba(255,255,255,.10);
+    --brand:#3987e5; --brand-ink:#9cc4f5; --good:#0ca30c; --good-ink:#5fd35f; --good-bg:#12331a;
+    --crit:#e05a5a; --crit-ink:#f19c9c; --crit-bg:#3a1c1c; --warn:#e5b84a; --warn-bg:#332a12;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--plane);color:var(--ink);font-family:var(--font);
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1240px;margin:0 auto;padding:20px 18px 64px}
+  a{color:var(--brand)}
+  h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+
+  /* Header */
+  header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-start;
+    justify-content:space-between;margin-bottom:18px}
+  .brandmark{display:flex;gap:12px;align-items:center}
+  .logo{width:42px;height:42px;border-radius:11px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--brand),var(--brand-ink));
+    display:grid;place-items:center;color:#fff;font-size:22px;box-shadow:var(--shadow)}
+  header.top h1{font-size:19px}
+  header.top .sub{color:var(--ink-2);font-size:12.5px;margin-top:2px;max-width:640px}
+  .rulechip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+    background:var(--brand);color:#fff;border-radius:999px;padding:4px 12px;
+    font-size:12px;font-weight:600}
+  .rulechip.alt{background:var(--surface);color:var(--brand-ink);
+    border:1px solid var(--ring)}
+
+  /* Buttons */
+  .btn{appearance:none;border:1px solid var(--ring);background:var(--surface);
+    color:var(--ink);border-radius:9px;padding:8px 13px;font:inherit;font-weight:550;
+    font-size:13px;cursor:pointer;display:inline-flex;gap:7px;align-items:center;
+    transition:background .12s,border-color .12s,transform .05s;white-space:nowrap}
+  .btn:hover{background:var(--surface-2);border-color:var(--brand)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent;border-color:transparent}
+  .btn.sm{padding:5px 9px;font-size:12px}
+  .btn.danger:hover{border-color:var(--crit);color:var(--crit)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow)}
+  .card .hd{padding:14px 16px 12px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .card .hd h2{font-size:14.5px;display:flex;gap:8px;align-items:center}
+  .card .bd{padding:14px 16px}
+  .hint{color:var(--muted);font-size:12px}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:16px 0}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px 15px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .lab{font-size:11.5px;color:var(--ink-2);font-weight:600;text-transform:uppercase;
+    letter-spacing:.03em}
+  .kpi .val{font-size:30px;font-weight:680;line-height:1.1;margin-top:6px;
+    font-variant-numeric:tabular-nums}
+  .kpi .cap{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kpi .bar{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand)}
+  .kpi.good .val{color:var(--good-ink)} .kpi.good .bar{background:var(--good)}
+  .kpi.crit .val{color:var(--crit-ink)} .kpi.crit .bar{background:var(--crit)}
+  .kpi.brand .bar{background:var(--brand)}
+
+  .grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+
+  /* Form */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld.full{grid-column:1/-1}
+  label{font-size:11.5px;font-weight:600;color:var(--ink-2)}
+  input,select,textarea{font:inherit;font-size:13px;padding:8px 10px;border-radius:8px;
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink);width:100%}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;
+    border-color:var(--brand)}
+  textarea{resize:vertical;min-height:56px}
+
+  /* Search */
+  .search{position:relative}
+  .search input{padding-left:32px}
+  .search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);
+    width:15px;height:15px;color:var(--muted)}
+
+  /* Table */
+  .tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--muted);font-weight:650;padding:7px 8px;border-bottom:1px solid var(--line)}
+  .tbl td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr.off td{opacity:.5}
+  .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+  .wsname{font-weight:600}
+  .wsmeta{font-size:11.5px;color:var(--muted)}
+  .tbl-scroll{max-height:420px;overflow:auto}
+
+  /* Toggle switch */
+  .sw{position:relative;display:inline-block;width:38px;height:22px;flex:0 0 auto}
+  .sw input{opacity:0;width:0;height:0}
+  .sw .track{position:absolute;inset:0;background:var(--line);border-radius:999px;
+    transition:.15s;cursor:pointer}
+  .sw .track::before{content:"";position:absolute;height:16px;width:16px;left:3px;top:3px;
+    background:#fff;border-radius:50%;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .sw input:checked + .track{background:var(--good)}
+  .sw input:checked + .track::before{transform:translateX(16px)}
+
+  /* Badges & chips */
+  .badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+    padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .badge.on{background:var(--good-bg);color:var(--good-ink)}
+  .badge.offb{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .badge.cust{background:var(--brand);color:#fff}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px;
+    border-radius:999px;border:1px solid var(--line);background:var(--surface-2);
+    margin:0 5px 5px 0;font-variant-numeric:tabular-nums}
+  .chip.inc{background:var(--good-bg);color:var(--good-ink);border-color:transparent}
+  .chip.rem{background:var(--crit-bg);color:var(--crit-ink);border-color:transparent}
+  .chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+
+  /* Accordion */
+  details.acc{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+    background:var(--surface-2);overflow:hidden}
+  details.acc>summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;
+    align-items:center;gap:10px;font-weight:600;font-size:13px}
+  details.acc>summary::-webkit-details-marker{display:none}
+  details.acc>summary .caret{transition:.15s;color:var(--muted);font-size:11px}
+  details.acc[open]>summary .caret{transform:rotate(90deg)}
+  details.acc .inner{padding:4px 12px 12px}
+  .statecount{margin-left:auto;display:flex;gap:6px}
+  .pill{font-size:11px;font-weight:650;padding:1px 8px;border-radius:999px;
+    font-variant-numeric:tabular-nums}
+  .pill.g{background:var(--good-bg);color:var(--good-ink)}
+  .pill.r{background:var(--crit-bg);color:var(--crit-ink)}
+  .pill.n{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+
+  .empty{color:var(--muted);font-size:12.5px;padding:14px;text-align:center}
+  .segbtns{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .segbtns button{border:none;background:var(--surface);color:var(--ink-2);padding:6px 11px;
+    font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+  .segbtns button.active{background:var(--brand);color:#fff}
+
+  /* Client checker result */
+  .result{border-radius:10px;padding:12px 14px;margin-top:12px;font-size:13px;
+    display:none;border:1px solid var(--line)}
+  .result.show{display:block}
+  .result.ok{background:var(--good-bg);border-color:transparent}
+  .result.no{background:var(--crit-bg);border-color:transparent}
+  .result h3{font-size:14px;margin-bottom:4px;display:flex;gap:8px;align-items:center}
+  .result.ok h3{color:var(--good-ink)} .result.no h3{color:var(--crit-ink)}
+  .result ul{margin:8px 0 0;padding-left:18px}
+
+  .row-actions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+  .icon-btn{border:none;background:transparent;color:var(--muted);cursor:pointer;
+    padding:4px;border-radius:6px;display:grid;place-items:center}
+  .icon-btn:hover{background:var(--surface-2);color:var(--crit)}
+  .icon-btn svg{width:15px;height:15px}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--plane);padding:10px 18px;border-radius:10px;
+    font-size:13px;font-weight:550;opacity:0;pointer-events:none;transition:.2s;z-index:50;
+    box-shadow:var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .filebtn{position:relative;overflow:hidden}
+  .filebtn input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+
+  footer.foot{margin-top:28px;color:var(--muted);font-size:11.5px;text-align:center;
+    border-top:1px solid var(--line);padding-top:16px}
+
+  @media (max-width:920px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media (max-width:520px){
+    .form-grid{grid-template-columns:1fr}
+    .kpis{grid-template-columns:1fr 1fr}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brandmark">
+      <div class="logo">🛠️</div>
+      <div>
+        <h1>Cobertura de Oficinas &amp; Benefício da Apólice</h1>
+        <div class="sub">Adicione ou remova oficinas e o sistema recalcula automaticamente
+          as cidades elegíveis ao benefício, com base na área de abrangência de cada oficina.</div>
+        <div>
+          <span class="rulechip">📍 Regra: raio de 50&nbsp;km da oficina</span>
+          <span class="rulechip alt" id="baseTag">Base: planilha padrão</span>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <label class="btn filebtn" title="Carregar a planilha base (.xlsx) com as abas Regiões e Sistemas">
+        ⬆️ Carregar planilha
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+      </label>
+      <button class="btn" id="exportBtn">⬇️ Exportar</button>
+      <button class="btn danger" id="resetBtn" title="Descartar alterações e voltar à base">↺ Restaurar</button>
+      <button class="btn ghost sm" id="themeBtn" title="Alternar tema">🌓</button>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid2">
+    <!-- LEFT: workshops -->
+    <div class="card">
+      <div class="hd">
+        <h2>🏭 Oficinas cadastradas</h2>
+        <span class="hint" id="wsCount"></span>
+      </div>
+      <div class="bd">
+        <details class="acc" id="addAcc" style="margin-bottom:14px">
+          <summary><span class="caret">▶</span> ➕ Adicionar nova oficina</summary>
+          <div class="inner">
+            <div class="form-grid">
+              <div class="fld"><label>Nome da oficina *</label><input id="fNome" placeholder="Ex.: OFICINA CENTRO"></div>
+              <div class="fld"><label>CEP</label><input id="fCep" placeholder="00000-000"></div>
+              <div class="fld"><label>Cidade (sede)</label><input id="fCidade" placeholder="Ex.: SANTOS"></div>
+              <div class="fld"><label>UF</label>
+                <select id="fUf"></select>
+              </div>
+              <div class="fld full"><label>Cidades atendidas (raio de 50&nbsp;km) — separadas por vírgula *</label>
+                <textarea id="fCoverage" placeholder="Ex.: SANTOS, SAO VICENTE, GUARUJA, CUBATAO, PRAIA GRANDE"></textarea>
+                <span class="hint">Informe os municípios dentro do raio de 50&nbsp;km da oficina. Eles passarão a ser elegíveis ao benefício.</span>
+              </div>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="btn primary" id="addBtn">Adicionar oficina</button>
+              <button class="btn ghost" id="clearAddBtn" type="button">Limpar</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="search" style="margin-bottom:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="wsSearch" placeholder="Buscar oficina por nome, cidade ou UF…">
+        </div>
+
+        <div class="tbl-scroll">
+          <table class="tbl">
+            <thead><tr>
+              <th style="width:44px">Ativa</th><th>Oficina</th>
+              <th class="num">Cidades</th><th style="width:40px"></th>
+            </tr></thead>
+            <tbody id="wsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- diff -->
+      <div class="card">
+        <div class="hd">
+          <h2>🔁 Atualizações no sistema</h2>
+          <div class="segbtns" id="diffSeg">
+            <button data-mode="all" class="active">Tudo</button>
+            <button data-mode="inc">Incluir</button>
+            <button data-mode="rem">Retirar</button>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="hint" style="margin-bottom:10px">
+            Compara as cidades elegíveis (oficinas ativas) com as já cadastradas no sistema.
+            <b style="color:var(--good-ink)">Incluir</b> = passou a ter cobertura ·
+            <b style="color:var(--crit-ink)">Retirar</b> = deixou de ter oficina no raio.
+          </div>
+          <div id="diffBody"></div>
+        </div>
+      </div>
+
+      <!-- eligible -->
+      <div class="card">
+        <div class="hd">
+          <h2>✅ Cidades elegíveis</h2>
+          <span class="hint" id="eligCount"></span>
+        </div>
+        <div class="bd">
+          <div class="search" style="margin-bottom:10px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input id="eligSearch" placeholder="Buscar cidade elegível…">
+          </div>
+          <div id="eligBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- client checker -->
+  <div class="card" style="margin-top:16px">
+    <div class="hd"><h2>🔎 Verificador de cobertura do cliente</h2>
+      <span class="hint">Cliente reclamou? Confira aqui se a cidade tem o benefício.</span></div>
+    <div class="bd">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div class="fld" style="flex:1;min-width:180px"><label>Cidade do cliente</label>
+          <input id="chkCity" placeholder="Digite a cidade…" list="cityList"></div>
+        <div class="fld" style="width:110px"><label>UF (opcional)</label><select id="chkUf"></select></div>
+        <button class="btn primary" id="chkBtn">Verificar</button>
+      </div>
+      <datalist id="cityList"></datalist>
+      <div class="result" id="chkResult"></div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    Dashboard de cobertura — substitui a consulta manual à planilha. Cálculo automático do raio de 50&nbsp;km
+    a partir da área de abrangência de cada oficina. Dados e alterações ficam salvos apenas neste navegador.
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script>
+/* fallback to CDN only if the local vendored copy is unavailable */
+if(typeof XLSX==="undefined"){
+  document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+}
+</script>
+<script>
+/* ============================ BASE DATA ============================ */
+const BASE_DATA = {"workshops":[{"cod":"644","nome":"ALDEIA DE BARUERI","coverage":["BARUERI","JANDIRA","CARAPICUIBA","ITAPEVI","SANTANA DE PARNAIBA","OSASCO","COTIA","TABOAO DA SERRA","EMBU DAS ARTES","CAJAMAR","ITAPECERICA DA SERRA","CAIEIRAS","FRANCO DA ROCHA","SAO ROQUE","SAO PAULO","MAIRINQUE","FRANCISCO MORATO","DIADEMA","SAO CAETANO DO SUL","CABREUVA","GUARULHOS","VARZEA PAULISTA","SANTO ANDRE","SAO BERNARDO DO CAMPO","JUNDIAI","MAUA","MAIRIPORA","IBIUNA","EMBU-GUACU"],"endereco":"AV DA ALDEIA, 631","bairro":"JARDIM IRACEMA/ALDEIA","cidade":"BARUERI","estado":"SP","cep":"06.440-000","macro":"SUDESTE","micro":"BARUERI","razao":"GARAGE 03 PERFORMANCE","cnpj":"62.124.082/0001-33"},{"cod":"495","nome":"ALPHAVILLE","coverage":["ARUERI","JANDIRA","CARAPICUIBA","ITAPEVI","SANTANA DE PARNAIBA","OSASCO","COTIA","TABOAO DA SERRA","EMBU DAS ARTES","CAJAMAR","ITAPECERICA DA SERRA","CAIEIRAS","FRANCO DA ROCHA","SAO ROQUE","SAO PAULO","MAIRINQUE","FRANCISCO MORATO","DIADEMA","SAO CAETANO DO SUL","CABREUVA","GUARULHOS","VARZEA PAULISTA","SANTO ANDRE","SAO BERNARDO DO CAMPO","JUNDIAI","MAUA","MAIRIPORA","IBIUNA","EMBU-GUACU"],"endereco":"ALAMEDA ARAGUAIA, 211","bairro":"ALPHAVILLE INDUSTRIAL","cidade":"BARUERI","estado":"SP","cep":"06455-000","macro":"SUDESTE","micro":"GSP","razao":"FLORA ALPHAVILLE SERVICOS AUTOMOTIVOS","cnpj":"37.706.300/0001-09"},{"cod":"666","nome":"AMERICANA","coverage":["AMERICANA","NOVA ODESSA","SANTA BARBARA D OESTE","SUMARE","HORTOLANDIA","CAMPINAS","PAULINIA","VALINHOS","VINHEDO","INDAIATUBA","ELIAS FAUSTO","CAPIVARI","MONTE MOR","RAFARD","MOMBUCA","PIRACICABA","RIO DAS PEDRAS","SALTINHO","CHARQUEADA","SAO PEDRO","AGUAS DE SAO PEDRO","LIMEIRA","IRACEMAPOLIS","CORDEIROPOLIS","ARARAS","LEME","COSMOPOLIS","ARTUR NOGUEIRA","ENGENHEIRO COELHO","HOLAMBRA","JAGUARIUNA","SANTO ANTONIO DE POSSE","PEDREIRA","AMPARO","ITUPEVA","LOUVEIRA","JUNDIAI"],"endereco":"RUA DOM PEDRO II, 436","bairro":"CENTRO","cidade":"AMERICANA","estado":"SP","cep":"13465-040","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"CT OFICINA AMERICANA E CENTRO AUTOMOTIVO LTDA EPP","cnpj":"65.020.978/0001-60"},{"cod":"558","nome":"ANALIA FRANCO","coverage":["SAO PAULO"],"endereco":"AV. REGENTE FEIJO, 457 / AV. ABEL FERREIRA, 334","bairro":"VILA REGENTE FEIJO","cidade":"SAO PAULO","estado":"SP","cep":"03340-000","macro":"SUDESTE","micro":"METROPOLITANA - SP(ZL)","razao":"ANALIA FRANCO AUTOCENTER LTDA","cnpj":"45.933.328/0001-07"},{"cod":"546","nome":"ANHAIA MELLO","coverage":["SAO PAULO"],"endereco":"AV. LUIZ IGNACIO DE ANHAIA MELLO, 9060 - LOJA 1","bairro":"VILA DIVINA PASTORA","cidade":"SAO PAULO","estado":"SP","cep":"03294-200","macro":"SUDESTE","micro":"METROPOLITANA - SP(ZL)","razao":"MM DE MORAES PECAS E SERVICOS LTDA ME","cnpj":"07.719.998/0001-28"},{"cod":"596","nome":"ARACAJU GRAGERU","coverage":["ARACAJU","NOSSA SENHORA DO SOCORRO","SAO CRISTOVAO","BARRA DOS COQUEIROS","LARANJEIRAS","MARUIM","RIACHUELO","AREIA BRANCA","ITAPORANGA D AJUDA","SALGADO","SANTA ROSA DE LIMA","DIVINA PASTORA","SANTO AMARO DAS BROTAS","ROSARIO DO CATETE","SIRIRI","CARMOPOLIS","GENERAL MAYNARD","JAPARATUBA","PIRAMBU"],"endereco":"AV. MARIETA LEITE, 07","bairro":"GRAGERU","cidade":"ARACAJU","estado":"SE","cep":"49027-190","macro":"NORDESTE","micro":"NORDESTE","razao":"RMS COMERCIO E SERVICOS","cnpj":"37.127.017/0001-14"},{"cod":"7","nome":"ARACATUBA","coverage":["ARACATUBA","BIRIGUI","PIACATU","CLEMENTINA","SANTOPOLIS DO AGUAPEI","GUARARAPES","RUBIACEA","BENTO DE ABREU","GLICERIO","BREJO ALEGRE","COROADOS","BILAC","GABRIEL MONTEIRO","LOURDES","VALPARAISO","MIRANDOPOLIS","LAVINIA","ANDRADINA","CASTILHO","PEREIRA BARRETO","SUD MENNUCCI","SUZANAPOLIS","ILHA SOLTEIRA","ITAPURA","NOVA INDEPENDENCIA","MURUTINGA DO SUL","SANTO ANTONIO DO ARACANGUA","TURIUBA","BURITAMA"],"endereco":"RUA LUIZ PEREIRA BARRETO, 800","bairro":"VILA SAO PAULO","cidade":"ARACATUBA","estado":"SP","cep":"16015-525","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"ATA CENTRO AUTOMOTIVO LTDA","cnpj":"08.249.950/0001-66"},{"cod":"609","nome":"ARARAQUARA","coverage":["ARARAQUARA","AMERICO BRASILIENSE","SANTA LUCIA","RINCAO","MOTUCA","GAVIAO PEIXOTO","BOA ESPERANCA DO SUL","TABATINGA","IBITINGA","NOVA EUROPA","TRABIJU","BORBOREMA","ITAPOLIS","MATAO","DOBRADA","TAQUARITINGA","FERNANDO PRESTES","CANDIDO RODRIGUES","VISTA ALEGRE DO ALTO","MONTE ALTO","JABOTICABAL","GUARIBA","PRADOPOLIS","PITANGUEIRAS","PINDORAMA","CATANDUVA","SAO CARLOS","DESCALVADO","PORTO FERREIRA","SANTA RITA DO PASSA QUATRO"],"endereco":"AV. DR. LEITE DE MORAES, 567","bairro":"VILA XAVIER","cidade":"ARARAQUARA","estado":"SP","cep":"14810-120","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"IVANI DONIZETE LATTI ME","cnpj":"20.356.728/0001-68"},{"cod":"638","nome":"ARARUAMA","coverage":["ARARUAMA","SAQUAREMA","IGUABA GRANDE","SAO PEDRO DA ALDEIA","CABO FRIO","ARRAIAL DO CABO","ARMACAO DOS BUZIOS","SILVA JARDIM","RIO BONITO","CASIMIRO DE ABREU","MARICA"],"endereco":"RUA COLATINA, 23","bairro":"HAWAY","cidade":"ARARUAMA","estado":"RJ","cep":"28979-377","macro":"SUDESTE","micro":"REGIAO DOS LAGOS - RJ","razao":"FERNANCAR MECANICA E ELETRICA LTDA","cnpj":"29.444.575/0001-85"}],"system":[{"estado":"ALAGOAS","cidades":["MACEIO","SATUBA","MARECHAL DEODORO","RIO LARGO","PILAR","MESSIAS","BARRA DE SANTO ANTONIO","SAO MIGUEL DOS CAMPOS","SAO LUIS DO QUITUNDE","MURICI","CAPELA","FLEXEIRAS","MATRIZ DE CAMARAGIBE","BARRA DE SAO MIGUEL","PARIPUEIRA","MARAGOGI","SAO MIGUEL DOS MILAGRES","PORTO DE PEDRAS"]},{"estado":"BAHIA","cidades":["SALVADOR","ALAGOINHAS","AMELIA RODRIGUES","CACHOEIRA","CAMACARI","CATU","CONCEICAO DA FEIRA","CONCEICAO DO JACUIPE","CORACAO DE MARIA","CRUZ DAS ALMAS","DIAS DAVILA","ITAPARICA","LAURO DE FREITAS","MADRE DE DEUS","MARAGOGIPE","MATA DE SAO JOAO","MURITIBA","PIRAI","POJUCA","PRAIA DO FORTE","SANTO AMARO","SANTO ESTEVAO","SAUBARA","SAO FRANCISCO DO CONDE","SAO GONCALO DOS CAMPOS","SAO JOAO","SAO SEBASTIAO DO PASSE","SIMOES FILHO","TEODORO SAMPAIO","TERRA NOVA","VERA CRUZ"]},{"estado":"CEARA","cidades":["FORTALEZA","AQUIRAZ","BEBERIBE","CASCAVEL","CAUCAIA","EUSEBIO","HORIZONTE","ITAITINGA","MARACANAU","PACATUBA","PARAIPABA","PENTECOSTE","SAO GONCALO DO AMARANTE","SAO LUIS DO CURU","TRAIRI"]},{"estado":"DISTRITO FEDERAL","cidades":["BRASILIA","AGUAS CLARAS","BRAZLANDIA","CRUZEIRO","GAMA","GUARA","NUCLEO BANDEIRANTE","PARANOA","PLANALTINA","RIACHO FUNDO","RECANTO DAS EMAS","SAMAMBAIA","SANTA MARIA","SOBRADINHO","TAGUATINGA","VICENTE PIRES"]},{"estado":"GOIAS","cidades":["ABADIANIA","ANAPOLIS","APARECIDA DE GOIANIA","BELA VISTA DE GOIAS","CALDAZINHA","CATALAO","CUMARI","GOIANDIRA","GOIANIA","GUANAPOLIS","GUAPO","HIDROLANDIA","INHUMAS","LEOPOLDO DE BULHOES","NEROPOLIS","NOVA AURORA","OUVIDOR","PETROLINA DE GOIAS","PIRACANJUBA","PRENOPOLIS","SENADOR CANEDO","SILVANIA","TRES RANCHOS","TRINDADE","VIANOPOLIS"]},{"estado":"MATO GROSSO DO SUL","cidades":["CAMPO GRANDE","ANASTACIO","AQUIDAUANA","BANDEIRANTES","CAMAPUA","CORGUINHO","DOIS IRMAOS DO BURITI","DOURADOS","GUIA LOPES DA LAGUNA","JARAQUARI","MARACAJU","MIRANDA","RIBAS DO RIO PARDO","RIO BRILHANTE","RIO VERDE DE MATO GROSSO","SIDROLANDIA","TERENOS"]},{"estado":"MATO GROSSO","cidades":["CUIABA","VARZEA GRANDE","SANTO ANTONIO DO LEVERGER","NOSSA SENHORA DO LIVRAMENTO","CHAPADA DOS GUIMARAES","JANGADA","ACORIZAL","NOBRES","ROSARIO OESTE","POCONE","CACERES","RONDONOPOLIS","BARRA DO BUGRES","TANGARA DA SERRA","CAMPO VERDE","PRIMAVERA DO LESTE"]},{"estado":"MINAS GERAIS","cidades":["BELO HORIZONTE","BARBACENA","BARROSO","BETIM","BRUMADINHO","CAETE","CARANDAI","CONGONHAS","CONSELHEIRO LAFAIETE","CONTAGEM","CORONEL XAVIER CHAVES","DORES DE CAMPOS","ESMERALDAS","IBRITE","ICARAPE","JUATUBA","LAGOA DOURADA","LAGOA SANTA","LAVRAS","MARIANA","NOVA LIMA","OURO PRETO","PEDRO LEOPOLDO","PRADOS","RAPOSOS","RESENDE COSTA","RIBEIRAO DAS NEVES","SABARA","SANTA CRUZ DE MINAS","SANTA LUZIA","SAO JOAQUIM DE BICAS","SARZEDO","SETE LAGOAS","TIRADENTES","VESPASIANO"]},{"estado":"PARA","cidades":["BELEM","ANANINDEUA","MARITUBA","BENEVIDES","SANTA BARBARA DO PARA","SANTA ISABEL DO PARA","CASTANHAL","VIGIA","BARCARENA","ABAETETUBA","MOSQUEIRO","SOURE","SALVATERRA"]},{"estado":"PARAIBA","cidades":["JOAO PESSOA","ALAGOA GRANDE","ALAGOA NOVA","ALHANDRA","AREIA","AROEIRAS","BAYEUX","CABEDELO","CAAPORA","CAMPINA GRANDE","CONDE","CRUZ DO ESPIRITO SANTO","ESPERANCA","FAGUNDES","INGA","ITATIUBA","JURIPIRANGA","LAGOA SECA","MAMANGUAPE","MASSARANDUBA","PEDRAS DE FOGO","PILAR","PITIMBU","POCINHOS","PUXINANA","REMIGIO","RIO TINTO","SANTA RITA"]},{"estado":"PARANA","cidades":["CURITIBA","ALMIRANTE TAMANDARE","ANTONINA","ARAUCARIA","BOCAIUVA DO SUL","CAMPINA DO GRANDE DO SUL","CAMPO LARGO","CARAMBEI","CASCAVEL","CASTRO","COLOMBO","DEZ QUEDAS","DOIS VIZINHOS","FRANCISCO BELTRAO","FOZ DO IGUACU","GUAIRA","GUARANIACU","ILHEUS DO SUL","IMBITUVA","LAPA","MARECHAL CANDIDO RONDON","MATELANDIA","MEDIANEIRA","MORRETES","ORBELA","PACAEMBU","PALESTINA","PARANAGUA","PATO BRANCO","PONTA GROSSA","PORTO RICO","PRUDENTOPOLIS","QUATRO BARRAS","QUEDAS DO IGUACU","RIO BRANCO DO SUL","RIO NEGRO","SANTA FE DO OESTE","SANTA TEREZA DO OESTE","SAO JOSE DOS PINHAIS","SAO MIGUEL DO IGUACU","TAMARANA","TOLEDO","TRES BARRAS DO PARANA","TUPA","TUPASSI","VALPARAISO","WENCESLAU BRAZ"]},{"estado":"PERNAMBUCO","cidades":["RECIFE","ABREU E LIMA","CABO DE SANTO AGOSTINHO","CAMARAGIBE","CARPINA","ESCADA","GLORIA DO GOITA","GRAVATA","ILHA DE ITAMARACA","IGARASSU","JABOATAO","JABOATAO DOS GUARARAPES","MORENO","OLINDA","PAULISTA","PEDRAS DE FOGO","POJUCA","RIO TINTO","SAO LOURENCO DA MATA","VITORIA DE SANTO ANTAO"]},{"estado":"PIAUI","cidades":["TERESINA","AGUA BRANCA","ALTOS","ALTO LONGA","BENEDITINOS","CAMPO MAIOR","JOSE DE FREITAS","MIGUEL LEAO","MONSENHOR GIL","NAZARIA","PARNARAMA","SAO PEDRO DO PIAUI","TIMON","UNIAO"]},{"estado":"RIO DE JANEIRO","cidades":["RIO DE JANEIRO","ANGRA DOS REIS","ARMACAO DOS BUZIOS","ARARUAMA","ARRAIAL DO CABO","BARRA DE SAO JOAO","BELFORD ROXO","CABO FRIO","CAXIAS","CASIMIRO DE ABREU","DUQUE DE CAXIAS","IGUABA GRANDE","ITABORAI","MAGE","MARICA","NITEROI","RIO DAS OSTRAS","SAQUAREMA","SAO GONCALO","SAO JOAO DE MERITI","SAO PEDRO DA ALDEIA","SILVA"]},{"estado":"RIO GRANDE DO NORTE","cidades":["NATAL","ACU","AREIA BRANCA","AREZ","BARAUNA","BREJINHO","CAICO","CARAUBAS","CATOLE DO ROCHA","CEARA-MIRIM","CURRAIS NOVOS","EXTREMOZ","GOIANINHA","GOVERNADOR DIX-SEPT ROSADO","GROSSOS","IELHEUS","IGUABA GRANDE","ILHA DE ITAMARACA","IPANGUACU","JARDIM DE PIRANHAS","JARDIM DO SERIDO","JAGUARIBE","JUCURUTU","LAGOA NOVA","MACAIBA","MACAU","MONTE ALEGRE","NISIA FLORESTA","PARAZINHO","PARELHAS","PARNAMIRIM","PATOS","PAU DOS FERROS","PENDENCIAS","POCO BRANCO","PUXINANA","RUSSA","SANTA LUZIA","SANTANA DO MATOS","SAO BENTO","SAO JOSE DE MIPIBU","SAO PAULO DO POTENGI","SAO PEDRO DO PIAUI","SITIO NOVO","TOUROS","VERA CRUZ"]},{"estado":"RIO GRANDE DO SUL","cidades":["PORTO ALEGRE","ALVORADA","ANTONIO PRADO","ARROIO DOS RATOS","BENTO GONCALVES","BOM JESUS","CACHOEIRINHA","CACHOEIRA DO SUL","CANELAS","CANOAS","CARSLOS BARBOSA CAXIAS DO SUL","ESTEIO","ESTANCIA VELHA","FARROUPILHA","FLORES DA CUNHA","GARIBALDI","GRAMADO","GRAVATAI","GUAIBA","IVOTI","MONTENEGRO","NOVO HAMBURGO","NOVA PETROPOLIS","NOVA SANTA RITA","PAROBE","PORTAO","SAPIRANGA","SAPUCAIA DO SUL","SAO LEOPOLDO","SAO MARCOS","SAO SEBASTIAO DO CAI","TRIUNFO","VERANOPOLIS","VIAMAO"]},{"estado":"SANTA CATARINA","cidades":["FLORIANOPOLIS","AGUAS MORNAS","ANTONIO CARLOS","APIUNA","ARANHADA","BARRA DOS COQUEIROS","BIGUACU","GOVERNADOR CELSO RAMOS","GUARUJA","ILHOTAS","IMBITUBA","ITAPIRANGA DA LUCIA","ITAPORANGA","ITAJUBA","ITAJUI","ITAPEMA","JARAGUA DO SUL","LAGES","LUIZ ALVES","MARUIM","NOSSA SENHORA DO SOCORRO","NOVA TRENTO","ORLEANS","PALHOCA","PAULO LOPES","PORTO BELO","SALGADO","SANTO AMARO","SAO CRISTOVAO","SAO JOAO DE ITAPERIU","SAO JOSE","SAO PEDRO DE ALCANTARA","SAO VICENTE","TIJUCAS","TUBARAO","TURVO"]},{"estado":"SAO PAULO","cidades":["ABADIANIA","AGUA BRANCA","AGUAI","AGUAS DA PRATA","AGUAS DE LINDOIA","AGUAS DE SAO PEDRO","AGUDOS","ALUMINIO","ALVARO DE CARVALHO","AMERICANA","AMERICO BRASILIENSE","AMPARO","ANALANDIA","ANGRA DOS REIS","ANITA GARIBALDI","APARECIDA","APARECIDA DO TABOADO","ARACATUBA","ARACOIABA DA SERRA","ARARAQUARA","ARARAS","ARAUJOS","ARCEBURGO","AREALVA","AREIA BRANCA","ARTUR NOGUEIRA","ARUJA","ASSIS","ATIBAIA","AVAI","AVARE","BAIRRO ALTO","BANDEIRANTES","BARBOSA","BARRA BONITA","BARRA DO CHAPA","BARRA DO TURVO","BARREIRAS","BARRETOS","BARRINHA","BARUERI","BATATAIS","BAURU","BEBEDOURO","BELA VISTA DE GOIAS","BELFORD ROXO","BENEDITINOS","BENTO DE ABREU","BERTIOGA","BILAC","BIRIGUI","BIRITIBA-MIRIM","BOA ESPERANCA DO SUL","BOFETE","BOM JESUS DOS PERDOES","BORA","BOREBI","BOTUCATU","BOTUJURU","BRAGANCA PAULISTA","BRAUNA","BREJO ALEGRE","BURITAMA","CABRALIA PAULISTA","CABREUVA","CACAPAVA","CACHOEIRA PAULISTA","CAETE","CAIEIRAS","CAJAMAR","CAJURU","CAMPINAS","CAMPO LIMPO PAULISTA","CAMPOS DO JORDAO","CAMPOS NOVOS PAULISTA","CANAS","CANDIDO MOTA","CAPELA DO ALTO","CAPIVARI","CARAGUATATUBA","CARAPICUIBA","CARDEAL","CASA BRANCA","CASIMIRO DE ABREU","CASSIA DOS COQUEIROS","CAXIAS","CEARA-MIRIM","CERQUILHO","CESARIO LANGE","CHARQUEADA","CLEMENTINA","CONCHAL","CONCHAS","CONTAGEM","COROADOS","CORUMBATAI","COSMOPOLIS","COTIA","CRAVINHOS","CRUZEIRO","CRUZALIA","CUBATAO","CUNHA","DESCALVADO","DIADEMA","DOBRADA","DOIS CORREGOS","DOURADO","DUMONT","DUQUE DE CAXIAS","ECHAPORA","ELIAS FAUSTO","EMBU DAS ARTES","EMBU-GUACU","ENGENHEIRO COELHO","ESPIRITO SANTO DO PINHAL","ESTANCIA","ESTIVA","EXTREMA","FERRAZ DE VASCONCELOS","FLOREAL","FLORINEA","FRANCISCO MORATO","FRANCO DA ROCHA","GABRIEL MONTEIRO","GARCA","GAVIAO PEIXOTO","GETULINA","GLICERIO","GOIANA","GUAIMBE","GUAIRA","GUARARAPES","GUARAREMA","GUARATINGUETA","GUARIBA","GUARUJA","GUARULHOS","HOLAMBRA","HORTOLANDIA","IBATE","IBIRAREMA","IGARACU DO TIETE","IGARAPE","IGARASSU","IGARATA","IGARATU","IGUAPE","ILHABELA","INDAIATUBA","INHUMAS","IPERO","IPEUNA","IRACEMAPOLIS","ITABORAI","ITANHAEM","ITAPECERICA DA SERRA","ITAPEMA","ITAPETININGA","ITAPIRA","ITAPIRANGA DA LUCIA","ITAPORANGA","ITAQUAQUECETUBA","ITARIRI","ITATIBA","ITATINGA","ITATUI","ITU","ITUPEVA","ITUPAVA","IVOTI","JABOTICABAL","JACAREI","JACUTINGA","JAGUARIUNA","JANDIRA","JARAGUA","JARINU","JAU","JOANOPOLIS","JORDANESIA","JOSE DE FREITAS","JUNDIAI","JUQUITIBA","JUSCELINO","JUTAI","LAGOA DOURADA","LAGOINHA","LARANJAL PAULISTA","LAVRAS","LEME","LENCOIS PAULISTA","LIMEIRA","LINDOIA","LORENA","LOURDES","LOUVEIRA","LUIZIANIA","LUPERCIO","LUTECIA","MAGE","MAIRINQUE","MAIRIPORA","MARACAI","MARICA","MARILIA","MATAO","MAUA","MIGUEL LEAO","MOGI DAS CRUZES","MOGI GUACU","MOGI MIRIM","MONGAGUA","MONSENHOR GIL","MONTE ALEGRE DO SUL","MONTE MOR","MONTEIRO LOBATO","MORUNGABA","MOTUCA","NANTES","NATIVIDADE DA SERRA","NAZARE PAULISTA","NEROPOLIS","NITEROI","NOVA ODESSA","NOVA VENEZA","NUCLEO BANDEIRANTE","OCAUCU","OLINDA","ORLANDIA","OSASCO","OURINHOS","PALMITAL","PARAGUACU","PARAIBUNA","PARDINHO","PATROCINIO PAULISTA","PAULINIA","PEDERNEIRAS","PEDRAS DE FOGO","PEDREIRA","PEDRINHAS PAULISTA","PEDRO DE TOLEDO","PENAPOLIS","PERUIBE","PIACATU","PIEDADE","PINDAMONHANGABA","PINHALZINHO","PIRACAIA","PIRACICABA","PIRAJU","PIRAPORA DO BOM JESUS","PIRATININGA","PLATINA","POA","POMPEIA","PORTO FELIZ","POTIM","PRAIA GRANDE","PRATANIA","QUATA","QUELUZ","RAPOSOS","RECIFE","REDENCAO DA SERRA","RIBEIRAO BONITO","RIBEIRAO PIRES","RIBEIRAO PRETO","RINCAO","RIO CLARO","RIO DAS PEDRAS","RIO DE JANEIRO","RIO GRANDE DA SERRA","ROSALIA","ROSEIRA","SABARA","SALESOPOLIS","SALTO","SALTO DE PIRAPORA","SANTA BARBARA DOESTE","SANTA BRANCA","SANTA CRUZ DAS PALMEIRAS","SANTA GERTRUDES","SANTA ISABEL","SANTA LUZIA","SANTA MARIA DA SERRA","SANTANA DE PARNAIBA","SANTO ANDRE","SANTO ANTONIO ARACANGUA","SANTO ANTONIO DE POSSE","SANTOPOLIS DO AGUAPEI","SANTOS","SAO BENTO DO SAPUCAI","SAO BERNARDO DO CAMPO","SAO CAETANO DO SUL","SAO CARLOS","SAO JOSE DO RIO PARDO","SAO JOSE DOS CAMPOS","SAO LOURENCO DA SERRA","SAO LUIS DO PARAITINGA","SAO MANUEL","SAO PAULO","SAO PEDRO","SAO PEDRO DO PIAUI","SAO ROQUE","SAO SEBASTIAO","SAO SEBASTIAO DO PARAISO","SAO VICENTE","SAPUCAIA DO SUL","SAQUAREMA","SARZEDO","SENADOR CANEDO","SERRA NEGRA","SERRANA","SETE LAGOAS","SILVA","SILVEIRAS","SOCORRO","SOROCABA","SUMARE","SUZANO","TABOAO DA SERRA","TAQUARITINGA","TARUMA","TATUI","TAUBATE","TERRA PRETA","TIETE","TIMON","TIRADENTES","TORRINHA","TREMEMBE","TUIUTI","UBATUBA","UNIAO","VALINHOS","VALPARAISO","VARGEM GRANDE PAULISTA","VARGEM PAULISTA","VARZEA PAULISTA","VERA CRUZ","VESPASIANO","VINHEDO","VITORIA DE SANTO ANTAO","VOTORANTIM","ZACARIAS."]}]};
+
+const UF_NAME = {AC:"ACRE",AL:"ALAGOAS",AP:"AMAPA",AM:"AMAZONAS",BA:"BAHIA",CE:"CEARA",
+  DF:"DISTRITO FEDERAL",ES:"ESPIRITO SANTO",GO:"GOIAS",MA:"MARANHAO",MT:"MATO GROSSO",
+  MS:"MATO GROSSO DO SUL",MG:"MINAS GERAIS",PA:"PARA",PB:"PARAIBA",PR:"PARANA",
+  PE:"PERNAMBUCO",PI:"PIAUI",RJ:"RIO DE JANEIRO",RN:"RIO GRANDE DO NORTE",
+  RS:"RIO GRANDE DO SUL",RO:"RONDONIA",RR:"RORAIMA",SC:"SANTA CATARINA",SP:"SAO PAULO",
+  SE:"SERGIPE",TO:"TOCANTINS"};
+const NAME_UF = Object.fromEntries(Object.entries(UF_NAME).map(([k,v])=>[v,k]));
+const LS_KEY = "oficinas_dash_v1";
+
+/* ============================ HELPERS ============================ */
+const $ = s => document.querySelector(s);
+const norm = s => (s||"").toString().toUpperCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[^A-Z0-9\s-]/g,"").replace(/\s+/g," ").trim();
+const uid = () => "w"+Math.random().toString(36).slice(2,9);
+const esc = s => (s||"").toString().replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* ============================ STATE ============================ */
+let state = { workshops:[], system:[], baseLabel:"planilha padrão" };
+
+function normalizeWorkshop(w, active=true){
+  return {
+    id: w.id || uid(),
+    cod: w.cod||"", nome: w.nome||"", cidade:(w.cidade||"").toUpperCase(),
+    estado:(w.estado||"").toUpperCase(), cep:w.cep||"", endereco:w.endereco||"",
+    coverage: Array.from(new Set((w.coverage||[]).map(c=>c.toUpperCase().trim()).filter(Boolean))),
+    active: w.active!==undefined ? w.active : active,
+    custom: !!w.custom
+  };
+}
+
+function loadBase(data, label){
+  state.workshops = (data.workshops||[]).map(w=>normalizeWorkshop(w));
+  state.system = (data.system||[]).map(s=>({estado:(s.estado||"").toUpperCase(),
+    cidades:(s.cidades||[]).map(c=>c.toUpperCase().trim()).filter(Boolean)}));
+  state.baseLabel = label||"planilha padrão";
+}
+
+function persist(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+}
+function restore(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const s=JSON.parse(raw);
+      if(s && s.workshops){ state=s;
+        state.workshops=state.workshops.map(w=>normalizeWorkshop(w,w.active));
+        return true; } }
+  }catch(e){}
+  return false;
+}
+
+/* ============================ CORE COMPUTE ============================ */
+// stateKey => full state name (from UF or itself)
+function stateFullName(uf){ return UF_NAME[uf] || uf; }
+
+function computeEligible(){
+  // map: fullState => Map(normCity => {city, workshops:[nome]})
+  const byState = new Map();
+  const allCities = new Map(); // normCity => {city, states:Set, workshops:[]}
+  for(const w of state.workshops){
+    if(!w.active) continue;
+    const full = stateFullName(w.estado);
+    if(!byState.has(full)) byState.set(full, new Map());
+    const m = byState.get(full);
+    for(const c of w.coverage){
+      const k = norm(c);
+      if(!k) continue;
+      if(!m.has(k)) m.set(k, {city:c, workshops:[]});
+      m.get(k).workshops.push(w.nome);
+      if(!allCities.has(k)) allCities.set(k, {city:c, states:new Set(), workshops:[]});
+      allCities.get(k).states.add(full);
+      allCities.get(k).workshops.push(w.nome+" ("+w.estado+")");
+    }
+  }
+  return {byState, allCities};
+}
+
+function computeDiff(){
+  const {byState} = computeEligible();
+  // union of states from system + eligible
+  const states = new Set();
+  state.system.forEach(s=>states.add(s.estado));
+  byState.forEach((_,k)=>states.add(k));
+  const sysMap = new Map(state.system.map(s=>[s.estado, new Set(s.cidades.map(norm))]));
+  const sysDisplay = new Map(state.system.map(s=>[s.estado, new Map(s.cidades.map(c=>[norm(c),c]))]));
+  const rows = [];
+  Array.from(states).sort().forEach(st=>{
+    const elig = byState.get(st) || new Map();
+    const sys = sysMap.get(st) || new Set();
+    const sysD = sysDisplay.get(st) || new Map();
+    const incluir=[], retirar=[];
+    elig.forEach((v,k)=>{ if(!sys.has(k)) incluir.push(v.city); });
+    sys.forEach(k=>{ if(!elig.has(k)) retirar.push(sysD.get(k)||k); });
+    if(incluir.length||retirar.length||elig.size){
+      rows.push({estado:st, incluir:incluir.sort(), retirar:retirar.sort(),
+        eligCount:elig.size, sysCount:sys.size});
+    }
+  });
+  return rows;
+}
+
+/* ============================ RENDER ============================ */
+function renderKPIs(){
+  const active = state.workshops.filter(w=>w.active).length;
+  const total = state.workshops.length;
+  const {allCities} = computeEligible();
+  const diff = computeDiff();
+  const inc = diff.reduce((a,r)=>a+r.incluir.length,0);
+  const rem = diff.reduce((a,r)=>a+r.retirar.length,0);
+  const k = [
+    {c:"brand", lab:"Oficinas ativas", val:active, cap:`de ${total} cadastradas`},
+    {c:"brand", lab:"Cidades elegíveis", val:allCities.size, cap:"cobertas por oficina ativa"},
+    {c:"good", lab:"Cidades a incluir", val:inc, cap:"passaram a ter cobertura"},
+    {c:"crit", lab:"Cidades a retirar", val:rem, cap:"sem oficina no raio"},
+    {c:"brand", lab:"Estados atendidos", val:new Set(state.workshops.filter(w=>w.active).map(w=>stateFullName(w.estado))).size, cap:"com oficina ativa"},
+  ];
+  $("#kpis").innerHTML = k.map(x=>`<div class="kpi ${x.c}"><span class="bar"></span>
+    <div class="lab">${x.lab}</div><div class="val">${x.val}</div><div class="cap">${x.cap}</div></div>`).join("");
+}
+
+function renderWorkshops(){
+  const q = norm($("#wsSearch").value);
+  const list = state.workshops.filter(w=>{
+    if(!q) return true;
+    return norm(w.nome).includes(q)||norm(w.cidade).includes(q)||norm(w.estado).includes(q);
+  });
+  $("#wsCount").textContent = `${state.workshops.filter(w=>w.active).length} ativas · ${state.workshops.length} no total`;
+  if(!list.length){ $("#wsBody").innerHTML = `<tr><td colspan="4" class="empty">Nenhuma oficina encontrada.</td></tr>`; return; }
+  $("#wsBody").innerHTML = list.map(w=>`
+    <tr class="${w.active?'':'off'}" data-id="${w.id}">
+      <td><label class="sw"><input type="checkbox" ${w.active?'checked':''} data-toggle="${w.id}">
+        <span class="track"></span></label></td>
+      <td>
+        <div class="wsname">${esc(w.nome)}
+          ${w.custom?'<span class="badge cust">nova</span>':''}
+          ${w.active?'<span class="badge on">ativa</span>':'<span class="badge offb">inativa</span>'}
+        </div>
+        <div class="wsmeta">${esc(w.cidade)}${w.estado?'/'+esc(w.estado):''}${w.cep?' · '+esc(w.cep):''}</div>
+      </td>
+      <td class="num">${w.coverage.length}</td>
+      <td><div class="row-actions">
+        <button class="icon-btn" title="Remover oficina" data-del="${w.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+        </button></div></td>
+    </tr>`).join("");
+}
+
+function renderDiff(){
+  const mode = $("#diffSeg .active").dataset.mode;
+  const rows = computeDiff().filter(r=>{
+    if(mode==="inc") return r.incluir.length;
+    if(mode==="rem") return r.retirar.length;
+    return r.incluir.length||r.retirar.length;
+  });
+  if(!rows.length){
+    $("#diffBody").innerHTML = `<div class="empty">Nenhuma atualização pendente — o sistema está alinhado às oficinas ativas.</div>`;
+    return;
+  }
+  $("#diffBody").innerHTML = rows.map(r=>{
+    const incChips = r.incluir.map(c=>`<span class="chip inc"><span class="dot"></span>${esc(c)}</span>`).join("");
+    const remChips = r.retirar.map(c=>`<span class="chip rem"><span class="dot"></span>${esc(c)}</span>`).join("");
+    const showInc = mode!=="rem" && r.incluir.length;
+    const showRem = mode!=="inc" && r.retirar.length;
+    return `<details class="acc" ${(r.incluir.length+r.retirar.length)<=14?'open':''}>
+      <summary><span class="caret">▶</span>${esc(r.estado)}
+        <span class="statecount">
+          ${r.incluir.length?`<span class="pill g">+${r.incluir.length}</span>`:''}
+          ${r.retirar.length?`<span class="pill r">−${r.retirar.length}</span>`:''}
+        </span></summary>
+      <div class="inner">
+        ${showInc?`<div class="hint" style="margin:2px 0 4px;color:var(--good-ink);font-weight:600">Incluir (${r.incluir.length})</div>${incChips}`:''}
+        ${showRem?`<div class="hint" style="margin:8px 0 4px;color:var(--crit-ink);font-weight:600">Retirar (${r.retirar.length})</div>${remChips}`:''}
+      </div></details>`;
+  }).join("");
+}
+
+function renderEligible(){
+  const q = norm($("#eligSearch").value);
+  const {byState, allCities} = computeEligible();
+  $("#eligCount").textContent = `${allCities.size} cidades`;
+  const states = Array.from(byState.keys()).sort();
+  let html="", any=false;
+  for(const st of states){
+    const m = byState.get(st);
+    let cities = Array.from(m.values()).map(v=>v.city).sort();
+    if(q) cities = cities.filter(c=>norm(c).includes(q));
+    if(!cities.length) continue;
+    any=true;
+    const chips = cities.map(c=>`<span class="chip inc"><span class="dot"></span>${esc(c)}</span>`).join("");
+    html += `<details class="acc" ${q?'open':''}><summary><span class="caret">▶</span>${esc(st)}
+      <span class="statecount"><span class="pill g">${cities.length}</span></span></summary>
+      <div class="inner">${chips}</div></details>`;
+  }
+  $("#eligBody").innerHTML = any?html:`<div class="empty">${q?'Nenhuma cidade elegível corresponde à busca.':'Nenhuma cidade elegível — ative ao menos uma oficina.'}</div>`;
+}
+
+function renderCityList(){
+  const {allCities} = computeEligible();
+  const opts = Array.from(allCities.values()).map(v=>v.city).sort();
+  $("#cityList").innerHTML = opts.map(c=>`<option value="${esc(c)}">`).join("");
+}
+
+function renderAll(){
+  renderKPIs(); renderWorkshops(); renderDiff(); renderEligible(); renderCityList();
+  $("#baseTag").textContent = "Base: "+state.baseLabel;
+  persist();
+}
+
+/* ============================ ACTIONS ============================ */
+function toggleWorkshop(id){
+  const w = state.workshops.find(x=>x.id===id);
+  if(w){ w.active=!w.active; renderAll(); toast(w.active?`"${w.nome}" ativada`:`"${w.nome}" desativada`); }
+}
+function deleteWorkshop(id){
+  const w = state.workshops.find(x=>x.id===id);
+  if(!w) return;
+  if(!confirm(`Remover a oficina "${w.nome}"? As cidades cobertas só por ela serão recalculadas.`)) return;
+  state.workshops = state.workshops.filter(x=>x.id!==id);
+  renderAll(); toast(`"${w.nome}" removida`);
+}
+function addWorkshop(){
+  const nome = $("#fNome").value.trim();
+  const coverageRaw = $("#fCoverage").value.trim();
+  if(!nome){ toast("Informe o nome da oficina"); $("#fNome").focus(); return; }
+  const coverage = coverageRaw.split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+  if(!coverage.length){ toast("Informe ao menos uma cidade atendida"); $("#fCoverage").focus(); return; }
+  const w = normalizeWorkshop({
+    nome: nome.toUpperCase(), cep:$("#fCep").value.trim(),
+    cidade:$("#fCidade").value.trim().toUpperCase(), estado:$("#fUf").value,
+    coverage, custom:true, active:true
+  });
+  state.workshops.unshift(w);
+  ["fNome","fCep","fCidade","fCoverage"].forEach(id=>$("#"+id).value="");
+  $("#addAcc").open=false;
+  renderAll(); toast(`"${w.nome}" adicionada (${coverage.length} cidades)`);
+}
+
+function checkCity(){
+  const cityRaw = $("#chkCity").value.trim();
+  const uf = $("#chkUf").value;
+  const res = $("#chkResult");
+  if(!cityRaw){ res.className="result"; return; }
+  const k = norm(cityRaw);
+  const {allCities} = computeEligible();
+  const hit = allCities.get(k);
+  // system membership
+  const targetFull = uf ? stateFullName(uf) : null;
+  let inSystem=false, sysStates=[];
+  state.system.forEach(s=>{ if(s.cidades.some(c=>norm(c)===k)){ inSystem=true; sysStates.push(s.estado);} });
+  if(hit){
+    const ws = Array.from(new Set(hit.workshops));
+    res.className="result show ok";
+    res.innerHTML = `<h3>✅ ${esc(cityRaw.toUpperCase())} tem o benefício</h3>
+      <div>Está dentro do raio de 50&nbsp;km de ${ws.length} oficina(s) ativa(s):</div>
+      <ul>${ws.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>
+      <div class="hint" style="margin-top:8px">${inSystem?'Já consta no sistema.':'⚠️ Ainda não consta no sistema — deve ser <b>incluída</b>.'}</div>`;
+  } else {
+    res.className="result show no";
+    res.innerHTML = `<h3>❌ ${esc(cityRaw.toUpperCase())} não tem cobertura</h3>
+      <div>Nenhuma oficina ativa cobre esta cidade dentro do raio de 50&nbsp;km.</div>
+      <div class="hint" style="margin-top:8px">${inSystem?`⚠️ Consta no sistema (${sysStates.join(", ")}) mas <b>não há oficina no raio</b> — candidata a ser <b>retirada</b>.`:'Não consta no sistema e não é elegível.'}</div>`;
+  }
+}
+
+/* ============================ EXPORT ============================ */
+function exportCSV(){
+  const diff = computeDiff();
+  const lines = [["Estado","Cidade","Acao"]];
+  diff.forEach(r=>{
+    r.incluir.forEach(c=>lines.push([r.estado,c,"INCLUIR"]));
+    r.retirar.forEach(c=>lines.push([r.estado,c,"RETIRAR"]));
+  });
+  const {byState} = computeEligible();
+  byState.forEach((m,st)=>{ Array.from(m.values()).forEach(v=>lines.push([st,v.city,"ELEGIVEL"])); });
+  const csv = lines.map(r=>r.map(f=>`"${(f||"").toString().replace(/"/g,'""')}"`).join(";")).join("\n");
+  const blob = new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href=url; a.download="cobertura_oficinas.csv"; a.click();
+  URL.revokeObjectURL(url); toast("CSV exportado");
+}
+
+/* ============================ XLSX IMPORT ============================ */
+function pickCol(headers, names){
+  const H = headers.map(h=>norm(h));
+  for(const n of names){ const i=H.indexOf(norm(n)); if(i>=0) return i; }
+  // partial match
+  for(const n of names){ const i=H.findIndex(h=>h.includes(norm(n))); if(i>=0) return i; }
+  return -1;
+}
+function importXLSX(file){
+  if(typeof XLSX==="undefined"){ toast("Leitor de planilha indisponível (sem internet). Use a base padrão."); return; }
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const wb = XLSX.read(e.target.result,{type:"array"});
+      // Regiões sheet
+      const regName = wb.SheetNames.find(n=>norm(n).includes("REGIO")) || wb.SheetNames[0];
+      const sysName = wb.SheetNames.find(n=>norm(n).includes("SISTEMA")) || wb.SheetNames[1];
+      const reg = XLSX.utils.sheet_to_json(wb.Sheets[regName],{header:1,defval:""});
+      const rh = reg[0]||[];
+      const ci = {
+        cod:pickCol(rh,["COD WEBCAPS","CODIGO","COD"]),
+        nome:pickCol(rh,["CAPS","OFICINA","NOME"]),
+        cov:pickCol(rh,["REGIOES DE ABRANGENCIA","ABRANGENCIA","REGIOES"]),
+        end:pickCol(rh,["ENDERECO"]), bairro:pickCol(rh,["BAIRRO"]),
+        cidade:pickCol(rh,["CIDADE"]), uf:pickCol(rh,["ESTADO","UF"]),
+        cep:pickCol(rh,["CEP"])
+      };
+      const workshops=[];
+      for(let i=1;i<reg.length;i++){
+        const row=reg[i]; if(!row) continue;
+        const nome=(row[ci.nome]||"").toString().trim(); if(!nome) continue;
+        let cov=(row[ci.cov]||"").toString().split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
+        cov=cov.map(c=>/^CAP\.?\s*SP$|^CAPITAL SP$/.test(c)?"SAO PAULO":c);
+        workshops.push({cod:row[ci.cod]||"",nome:nome.toUpperCase(),coverage:cov,
+          endereco:row[ci.end]||"",bairro:row[ci.bairro]||"",
+          cidade:(row[ci.cidade]||"").toString().toUpperCase(),
+          estado:(row[ci.uf]||"").toString().toUpperCase().trim(),cep:(row[ci.cep]||"").toString()});
+      }
+      // Sistemas sheet
+      const system=[];
+      if(sysName && wb.Sheets[sysName]){
+        const sys = XLSX.utils.sheet_to_json(wb.Sheets[sysName],{header:1,defval:""});
+        const sh=sys[0]||[];
+        const es=pickCol(sh,["ESTADO"]), cd=pickCol(sh,["CIDADES","CIDADE"]);
+        for(let i=1;i<sys.length;i++){
+          const row=sys[i]; if(!row) continue;
+          const est=(row[es]||"").toString().trim().toUpperCase(); if(!est) continue;
+          const cidades=(row[cd]||"").toString().split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
+          system.push({estado:est,cidades});
+        }
+      }
+      if(!workshops.length){ toast("Não encontrei oficinas na aba Regiões."); return; }
+      loadBase({workshops,system}, file.name);
+      renderAll();
+      toast(`Planilha carregada: ${workshops.length} oficinas, ${system.length} estados`);
+    }catch(err){ console.error(err); toast("Erro ao ler a planilha: "+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ============================ INIT ============================ */
+function initSelects(){
+  const opts = ['<option value="">—</option>'].concat(
+    Object.keys(UF_NAME).sort().map(uf=>`<option value="${uf}">${uf}</option>`));
+  $("#fUf").innerHTML = opts.join("");
+  $("#fUf").value="SP";
+  $("#chkUf").innerHTML = opts.join("");
+}
+
+function bind(){
+  $("#wsSearch").addEventListener("input", renderWorkshops);
+  $("#eligSearch").addEventListener("input", renderEligible);
+  $("#addBtn").addEventListener("click", addWorkshop);
+  $("#clearAddBtn").addEventListener("click", ()=>["fNome","fCep","fCidade","fCoverage"].forEach(id=>$("#"+id).value=""));
+  $("#chkBtn").addEventListener("click", checkCity);
+  $("#chkCity").addEventListener("keydown", e=>{ if(e.key==="Enter") checkCity(); });
+  $("#exportBtn").addEventListener("click", exportCSV);
+  $("#fileInput").addEventListener("change", e=>{ if(e.target.files[0]) importXLSX(e.target.files[0]); e.target.value=""; });
+  $("#resetBtn").addEventListener("click", ()=>{
+    if(!confirm("Descartar todas as alterações e voltar à base carregada?")) return;
+    localStorage.removeItem(LS_KEY); loadBase(BASE_DATA,"planilha padrão"); renderAll(); toast("Base restaurada");
+  });
+  $("#wsBody").addEventListener("click", e=>{
+    const del=e.target.closest("[data-del]"); if(del){ deleteWorkshop(del.dataset.del); return; }
+  });
+  $("#wsBody").addEventListener("change", e=>{
+    const t=e.target.closest("[data-toggle]"); if(t) toggleWorkshop(t.dataset.toggle);
+  });
+  $("#diffSeg").addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    $("#diffSeg .active").classList.remove("active"); b.classList.add("active"); renderDiff();
+  });
+  $("#themeBtn").addEventListener("click", ()=>{
+    const cur=document.documentElement.getAttribute("data-theme");
+    const next = cur==="dark"?"light":(cur==="light"?"dark":(matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark"));
+    document.documentElement.setAttribute("data-theme",next);
+    try{localStorage.setItem("oficinas_theme",next);}catch(e){}
+  });
+}
+
+(function init(){
+  const th = (()=>{try{return localStorage.getItem("oficinas_theme")}catch(e){return null}})();
+  if(th) document.documentElement.setAttribute("data-theme",th);
+  initSelects(); bind();
+  if(!restore()) loadBase(BASE_DATA,"planilha padrão");
+  renderAll();
+})();
+</script>
