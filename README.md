@@ -11,10 +11,14 @@ instalação — funciona totalmente offline.
 
 ### Fluxo típico (cliente reclamou)
 
-1. Vá ao painel **🔎 Verificador de cobertura do cliente** (rodapé).
-2. Digite a cidade do cliente e clique em **Verificar**.
-3. O sistema informa se a cidade está no raio de 50 km de alguma oficina ativa, quais
-   oficinas a cobrem e se ela já consta no sistema.
+Vá ao painel **🔎 Verificador de cobertura do cliente** (rodapé). Há dois modos:
+
+- **Por endereço / CEP** *(recomendado)* — digite o CEP (ou o endereço) do cliente e
+  clique em **Buscar oficina no raio de 50 km**. O sistema geolocaliza o endereço, calcula
+  a **distância real** até cada oficina ativa e lista as que estão dentro de 50 km (ou, se
+  nenhuma estiver, informa a oficina mais próxima e a distância). *Requer internet.*
+- **Por cidade** — busca instantânea e offline: informa se a cidade do cliente está na área
+  de abrangência de alguma oficina ativa e se já consta no sistema.
 
 ## Funcionalidades
 
@@ -25,7 +29,7 @@ instalação — funciona totalmente offline.
 | **Adicionar oficina** | Informe nome, CEP, cidade/UF e as cidades atendidas (raio de 50 km). |
 | **Atualizações no sistema** | Compara as cidades elegíveis com as já cadastradas e mostra, por estado, o que **incluir** (passou a ter cobertura) e o que **retirar** (deixou de ter oficina no raio). |
 | **Cidades elegíveis** | Lista, por estado, todas as cidades cobertas por alguma oficina ativa. |
-| **Verificador de cliente** | Consulta rápida por cidade. |
+| **Verificador de cliente** | Consulta por **endereço/CEP** (distância real ao raio de 50 km, online) ou por **cidade** (offline). |
 | **Carregar planilha** | Importa a planilha base (`.xlsx`) com as abas **Regiões** e **Sistemas**. |
 | **Exportar** | Baixa um CSV com as ações (incluir/retirar) e a lista de cidades elegíveis. |
 

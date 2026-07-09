@@ -326,13 +326,30 @@
   <!-- client checker -->
   <div class="card" style="margin-top:16px">
     <div class="hd"><h2>🔎 Verificador de cobertura do cliente</h2>
-      <span class="hint">Cliente reclamou? Confira aqui se a cidade tem o benefício.</span></div>
+      <div class="segbtns" id="chkSeg">
+        <button data-mode="addr" class="active">Por endereço / CEP</button>
+        <button data-mode="city">Por cidade</button>
+      </div>
+    </div>
     <div class="bd">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-        <div class="fld" style="flex:1;min-width:180px"><label>Cidade do cliente</label>
-          <input id="chkCity" placeholder="Digite a cidade…" list="cityList"></div>
-        <div class="fld" style="width:110px"><label>UF (opcional)</label><select id="chkUf"></select></div>
-        <button class="btn primary" id="chkBtn">Verificar</button>
+      <!-- ENDEREÇO / CEP: calcula a distância real (raio de 50 km) -->
+      <div id="chkAddrBox">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fld" style="flex:1;min-width:240px"><label>Endereço ou CEP do cliente</label>
+            <input id="chkAddr" placeholder="Ex.: 11015-020  ·  ou  ·  Rua XV de Novembro, Santos SP"></div>
+          <button class="btn primary" id="chkAddrBtn">📍 Buscar oficina no raio de 50&nbsp;km</button>
+        </div>
+        <span class="hint">Calcula a <b>distância real</b> do endereço até cada oficina ativa. Requer conexão com a internet (geolocalização). O CEP costuma dar o resultado mais preciso.</span>
+      </div>
+      <!-- CIDADE: busca instantânea na área de abrangência (offline) -->
+      <div id="chkCityBox" style="display:none">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="fld" style="flex:1;min-width:180px"><label>Cidade do cliente</label>
+            <input id="chkCity" placeholder="Digite a cidade…" list="cityList"></div>
+          <div class="fld" style="width:110px"><label>UF (opcional)</label><select id="chkUf"></select></div>
+          <button class="btn primary" id="chkBtn">Verificar</button>
+        </div>
+        <span class="hint">Consulta instantânea (offline) pela área de abrangência das oficinas ativas.</span>
       </div>
       <datalist id="cityList"></datalist>
       <div class="result" id="chkResult"></div>
@@ -628,6 +645,130 @@ function checkCity(){
   }
 }
 
+/* ============================ GEO / RADIUS SEARCH ============================ */
+const RADIUS_KM = 50;
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function cleanCEP(s){ const d=(s||"").replace(/\D/g,""); return d.length===8?d:null; }
+function haversineKm(a,b){
+  const R=6371, toR=x=>x*Math.PI/180;
+  const dLat=toR(b.lat-a.lat), dLon=toR(b.lon-a.lon);
+  const h=Math.sin(dLat/2)**2 + Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+let geoCache = (()=>{ try{return JSON.parse(localStorage.getItem("oficinas_geocache")||"{}")}catch(e){return {}} })();
+function saveGeoCache(){ try{localStorage.setItem("oficinas_geocache",JSON.stringify(geoCache))}catch(e){} }
+async function fetchJSON(url){
+  const r = await fetch(url,{headers:{"Accept":"application/json"}});
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+// geocoder can be overridden for tests
+let _geocoder = null;
+let _lastNominatim = 0;
+async function geocodeText(q){
+  const key = "q:"+norm(q);
+  if(geoCache[key]!==undefined) return geoCache[key];
+  const wait = 1100-(Date.now()-_lastNominatim); if(wait>0) await sleep(wait);
+  _lastNominatim = Date.now();
+  let res=null;
+  try{
+    const j = await fetchJSON("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q="+encodeURIComponent(q));
+    if(j && j[0]) res={lat:+j[0].lat, lon:+j[0].lon, label:j[0].display_name};
+  }catch(e){}
+  if(res){ geoCache[key]=res; saveGeoCache(); }
+  return res;
+}
+async function geocodeCEP(cep){
+  const key = "cep:"+cep;
+  if(geoCache[key]!==undefined) return geoCache[key];
+  let res=null;
+  try{
+    const j = await fetchJSON("https://brasilapi.com.br/api/cep/v2/"+cep);
+    const c = j && j.location && j.location.coordinates;
+    if(c && c.latitude){
+      res={lat:+c.latitude, lon:+c.longitude,
+        label:[j.street,j.neighborhood,j.city,j.state].filter(Boolean).join(", ")};
+    } else if(j && j.city){
+      res = await geocodeText([j.city,j.state,"Brasil"].filter(Boolean).join(", "));
+    }
+  }catch(e){}
+  if(!res) res = await geocodeText(cep+", Brasil");
+  if(res){ geoCache[key]=res; saveGeoCache(); }
+  return res;
+}
+async function geocode(input){
+  if(_geocoder) return _geocoder(input);
+  const cep = cleanCEP(input);
+  if(cep) return geocodeCEP(cep);
+  return geocodeText(/bra[sz]il/i.test(input) ? input : input+", Brasil");
+}
+async function geocodeWorkshop(w){
+  if(_geocoder) return _geocoder(w.cep||w.cidade||w.nome);
+  const cep = cleanCEP(w.cep);
+  if(cep){ const r = await geocodeCEP(cep); if(r) return r; }
+  const parts = [w.endereco,w.bairro,w.cidade,w.estado,"Brasil"].filter(Boolean).join(", ");
+  return geocode(cep ? parts : (w.cep? w.cep : parts));
+}
+async function mapPool(items, size, fn){
+  const out=new Array(items.length); let i=0;
+  const worker=async()=>{ while(i<items.length){ const idx=i++; out[idx]=await fn(items[idx],idx); } };
+  await Promise.all(Array.from({length:Math.min(size,items.length||1)}, worker));
+  return out;
+}
+async function checkByAddress(){
+  const input = $("#chkAddr").value.trim();
+  const res = $("#chkResult");
+  if(!input){ res.className="result"; return; }
+  const btn = $("#chkAddrBtn"); const orig = btn.innerHTML;
+  btn.disabled=true; btn.textContent="Buscando…";
+  res.className="result show"; res.removeAttribute("style");
+  res.innerHTML = '<div class="hint">🔄 Localizando o endereço do cliente…</div>';
+  try{
+    const client = await geocode(input);
+    if(!client){
+      res.className="result show no";
+      res.innerHTML = `<h3>⚠️ Não foi possível localizar o endereço</h3>
+        <div>Confira o CEP ou o endereço digitado e tente novamente. Esta busca precisa de conexão com a internet.</div>
+        <div class="hint" style="margin-top:8px">Dica: informar o <b>CEP</b> costuma dar o resultado mais preciso.</div>`;
+      return;
+    }
+    const active = state.workshops.filter(w=>w.active);
+    if(!active.length){
+      res.className="result show no";
+      res.innerHTML = `<h3>❌ Nenhuma oficina ativa</h3><div>Ative ao menos uma oficina para calcular a cobertura.</div>`;
+      return;
+    }
+    let done=0;
+    const geos = await mapPool(active, 6, async w=>{
+      const g = await geocodeWorkshop(w);
+      done++; res.innerHTML = `<div class="hint">📍 Cliente localizado. Calculando distância às oficinas (${done}/${active.length})…</div>`;
+      return g ? {w, dist:haversineKm(client,g)} : null;
+    });
+    const results = geos.filter(Boolean).sort((a,b)=>a.dist-b.dist);
+    const failed = active.length - results.length;
+    const within = results.filter(r=>r.dist<=RADIUS_KM);
+    if(within.length){
+      res.className="result show ok";
+      res.innerHTML = `<h3>✅ Cliente tem acesso ao benefício</h3>
+        <div>${within.length} oficina(s) a até ${RADIUS_KM}&nbsp;km do endereço informado:</div>
+        <ul>${within.map(r=>`<li><b>${esc(r.w.nome)}</b> — ${r.dist.toFixed(1)} km · ${esc(r.w.cidade)}${r.w.estado?'/'+esc(r.w.estado):''}</li>`).join("")}</ul>
+        <div class="hint" style="margin-top:8px">Endereço localizado: ${esc(client.label||input)}</div>`;
+    } else {
+      const n = results[0];
+      res.className="result show no";
+      res.innerHTML = `<h3>❌ Cliente fora do raio de ${RADIUS_KM}&nbsp;km</h3>
+        <div>Nenhuma oficina ativa a menos de ${RADIUS_KM}&nbsp;km do endereço informado.</div>
+        ${n?`<div class="hint" style="margin-top:8px">Oficina mais próxima: <b>${esc(n.w.nome)}</b> — ${n.dist.toFixed(1)} km (${esc(n.w.cidade)}${n.w.estado?'/'+esc(n.w.estado):''}).</div>`:''}
+        ${failed?`<div class="hint">⚠️ ${failed} oficina(s) não puderam ser geolocalizadas.</div>`:''}
+        <div class="hint">Endereço localizado: ${esc(client.label||input)}</div>`;
+    }
+  }catch(e){
+    res.className="result show no";
+    res.innerHTML = `<h3>⚠️ Erro na busca</h3><div>${esc(e.message)}</div>
+      <div class="hint" style="margin-top:8px">Verifique a conexão com a internet e tente novamente.</div>`;
+  }finally{ btn.disabled=false; btn.innerHTML=orig; }
+}
+
 /* ============================ EXPORT ============================ */
 function exportCSV(){
   const diff = computeDiff();
@@ -722,6 +863,16 @@ function bind(){
   $("#clearAddBtn").addEventListener("click", ()=>["fNome","fCep","fCidade","fCoverage"].forEach(id=>$("#"+id).value=""));
   $("#chkBtn").addEventListener("click", checkCity);
   $("#chkCity").addEventListener("keydown", e=>{ if(e.key==="Enter") checkCity(); });
+  $("#chkAddrBtn").addEventListener("click", checkByAddress);
+  $("#chkAddr").addEventListener("keydown", e=>{ if(e.key==="Enter") checkByAddress(); });
+  $("#chkSeg").addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    $("#chkSeg .active").classList.remove("active"); b.classList.add("active");
+    const addr = b.dataset.mode==="addr";
+    $("#chkAddrBox").style.display = addr?"":"none";
+    $("#chkCityBox").style.display = addr?"none":"";
+    $("#chkResult").className="result";
+  });
   $("#exportBtn").addEventListener("click", exportCSV);
   $("#fileInput").addEventListener("change", e=>{ if(e.target.files[0]) importXLSX(e.target.files[0]); e.target.value=""; });
   $("#resetBtn").addEventListener("click", ()=>{
