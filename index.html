@@ -356,6 +356,23 @@
     </div>
   </div>
 
+  <!-- BATCH: validar e atualizar planilha por distância real -->
+  <div class="card" style="margin-top:16px">
+    <div class="hd"><h2>⚙️ Validar e atualizar a planilha (distância real)</h2>
+      <span class="hint">Gera a planilha com as colunas Incluir/Retirar preenchidas.</span></div>
+    <div class="bd">
+      <div class="hint" style="margin-bottom:12px">
+        Calcula a distância real (raio de 50&nbsp;km) entre <b>cada município do Brasil</b> e as oficinas ativas
+        (ponto da oficina pelo <b>CEP</b>, com o centro da cidade como reserva) e devolve a <b>mesma planilha</b>
+        com a aba <b>Sistemas</b> atualizada:
+        <b style="color:var(--good-ink)">Incluir</b> = município no raio que ainda não está no sistema ·
+        <b style="color:var(--crit-ink)">Retirar</b> = cidade do sistema fora do raio. Formato das células: <code>DD/MM - Cidade (UF)</code>.
+      </div>
+      <button class="btn primary" id="batchBtn">⬇️ Gerar planilha atualizada (.xlsx)</button>
+      <div class="result" id="batchResult"></div>
+    </div>
+  </div>
+
   <footer class="foot">
     Dashboard de cobertura — substitui a consulta manual à planilha. Cálculo automático do raio de 50&nbsp;km
     a partir da área de abrangência de cada oficina. Dados e alterações ficam salvos apenas neste navegador.
@@ -371,6 +388,7 @@ if(typeof XLSX==="undefined"){
   document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
 }
 </script>
+<script src="data/municipios.js"></script>
 <script>
 /* ============================ BASE DATA ============================ */
 const BASE_DATA = {"workshops":[{"cod":"644","nome":"ALDEIA DE BARUERI","coverage":["BARUERI","JANDIRA","CARAPICUIBA","ITAPEVI","SANTANA DE PARNAIBA","OSASCO","COTIA","TABOAO DA SERRA","EMBU DAS ARTES","CAJAMAR","ITAPECERICA DA SERRA","CAIEIRAS","FRANCO DA ROCHA","SAO ROQUE","SAO PAULO","MAIRINQUE","FRANCISCO MORATO","DIADEMA","SAO CAETANO DO SUL","CABREUVA","GUARULHOS","VARZEA PAULISTA","SANTO ANDRE","SAO BERNARDO DO CAMPO","JUNDIAI","MAUA","MAIRIPORA","IBIUNA","EMBU-GUACU"],"endereco":"AV DA ALDEIA, 631","bairro":"JARDIM IRACEMA/ALDEIA","cidade":"BARUERI","estado":"SP","cep":"06.440-000","macro":"SUDESTE","micro":"BARUERI","razao":"GARAGE 03 PERFORMANCE","cnpj":"62.124.082/0001-33"},{"cod":"495","nome":"ALPHAVILLE","coverage":["ARUERI","JANDIRA","CARAPICUIBA","ITAPEVI","SANTANA DE PARNAIBA","OSASCO","COTIA","TABOAO DA SERRA","EMBU DAS ARTES","CAJAMAR","ITAPECERICA DA SERRA","CAIEIRAS","FRANCO DA ROCHA","SAO ROQUE","SAO PAULO","MAIRINQUE","FRANCISCO MORATO","DIADEMA","SAO CAETANO DO SUL","CABREUVA","GUARULHOS","VARZEA PAULISTA","SANTO ANDRE","SAO BERNARDO DO CAMPO","JUNDIAI","MAUA","MAIRIPORA","IBIUNA","EMBU-GUACU"],"endereco":"ALAMEDA ARAGUAIA, 211","bairro":"ALPHAVILLE INDUSTRIAL","cidade":"BARUERI","estado":"SP","cep":"06455-000","macro":"SUDESTE","micro":"GSP","razao":"FLORA ALPHAVILLE SERVICOS AUTOMOTIVOS","cnpj":"37.706.300/0001-09"},{"cod":"666","nome":"AMERICANA","coverage":["AMERICANA","NOVA ODESSA","SANTA BARBARA D OESTE","SUMARE","HORTOLANDIA","CAMPINAS","PAULINIA","VALINHOS","VINHEDO","INDAIATUBA","ELIAS FAUSTO","CAPIVARI","MONTE MOR","RAFARD","MOMBUCA","PIRACICABA","RIO DAS PEDRAS","SALTINHO","CHARQUEADA","SAO PEDRO","AGUAS DE SAO PEDRO","LIMEIRA","IRACEMAPOLIS","CORDEIROPOLIS","ARARAS","LEME","COSMOPOLIS","ARTUR NOGUEIRA","ENGENHEIRO COELHO","HOLAMBRA","JAGUARIUNA","SANTO ANTONIO DE POSSE","PEDREIRA","AMPARO","ITUPEVA","LOUVEIRA","JUNDIAI"],"endereco":"RUA DOM PEDRO II, 436","bairro":"CENTRO","cidade":"AMERICANA","estado":"SP","cep":"13465-040","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"CT OFICINA AMERICANA E CENTRO AUTOMOTIVO LTDA EPP","cnpj":"65.020.978/0001-60"},{"cod":"558","nome":"ANALIA FRANCO","coverage":["SAO PAULO"],"endereco":"AV. REGENTE FEIJO, 457 / AV. ABEL FERREIRA, 334","bairro":"VILA REGENTE FEIJO","cidade":"SAO PAULO","estado":"SP","cep":"03340-000","macro":"SUDESTE","micro":"METROPOLITANA - SP(ZL)","razao":"ANALIA FRANCO AUTOCENTER LTDA","cnpj":"45.933.328/0001-07"},{"cod":"546","nome":"ANHAIA MELLO","coverage":["SAO PAULO"],"endereco":"AV. LUIZ IGNACIO DE ANHAIA MELLO, 9060 - LOJA 1","bairro":"VILA DIVINA PASTORA","cidade":"SAO PAULO","estado":"SP","cep":"03294-200","macro":"SUDESTE","micro":"METROPOLITANA - SP(ZL)","razao":"MM DE MORAES PECAS E SERVICOS LTDA ME","cnpj":"07.719.998/0001-28"},{"cod":"596","nome":"ARACAJU GRAGERU","coverage":["ARACAJU","NOSSA SENHORA DO SOCORRO","SAO CRISTOVAO","BARRA DOS COQUEIROS","LARANJEIRAS","MARUIM","RIACHUELO","AREIA BRANCA","ITAPORANGA D AJUDA","SALGADO","SANTA ROSA DE LIMA","DIVINA PASTORA","SANTO AMARO DAS BROTAS","ROSARIO DO CATETE","SIRIRI","CARMOPOLIS","GENERAL MAYNARD","JAPARATUBA","PIRAMBU"],"endereco":"AV. MARIETA LEITE, 07","bairro":"GRAGERU","cidade":"ARACAJU","estado":"SE","cep":"49027-190","macro":"NORDESTE","micro":"NORDESTE","razao":"RMS COMERCIO E SERVICOS","cnpj":"37.127.017/0001-14"},{"cod":"7","nome":"ARACATUBA","coverage":["ARACATUBA","BIRIGUI","PIACATU","CLEMENTINA","SANTOPOLIS DO AGUAPEI","GUARARAPES","RUBIACEA","BENTO DE ABREU","GLICERIO","BREJO ALEGRE","COROADOS","BILAC","GABRIEL MONTEIRO","LOURDES","VALPARAISO","MIRANDOPOLIS","LAVINIA","ANDRADINA","CASTILHO","PEREIRA BARRETO","SUD MENNUCCI","SUZANAPOLIS","ILHA SOLTEIRA","ITAPURA","NOVA INDEPENDENCIA","MURUTINGA DO SUL","SANTO ANTONIO DO ARACANGUA","TURIUBA","BURITAMA"],"endereco":"RUA LUIZ PEREIRA BARRETO, 800","bairro":"VILA SAO PAULO","cidade":"ARACATUBA","estado":"SP","cep":"16015-525","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"ATA CENTRO AUTOMOTIVO LTDA","cnpj":"08.249.950/0001-66"},{"cod":"609","nome":"ARARAQUARA","coverage":["ARARAQUARA","AMERICO BRASILIENSE","SANTA LUCIA","RINCAO","MOTUCA","GAVIAO PEIXOTO","BOA ESPERANCA DO SUL","TABATINGA","IBITINGA","NOVA EUROPA","TRABIJU","BORBOREMA","ITAPOLIS","MATAO","DOBRADA","TAQUARITINGA","FERNANDO PRESTES","CANDIDO RODRIGUES","VISTA ALEGRE DO ALTO","MONTE ALTO","JABOTICABAL","GUARIBA","PRADOPOLIS","PITANGUEIRAS","PINDORAMA","CATANDUVA","SAO CARLOS","DESCALVADO","PORTO FERREIRA","SANTA RITA DO PASSA QUATRO"],"endereco":"AV. DR. LEITE DE MORAES, 567","bairro":"VILA XAVIER","cidade":"ARARAQUARA","estado":"SP","cep":"14810-120","macro":"SUDESTE","micro":"SUDESTE-INTERIOR SP","razao":"IVANI DONIZETE LATTI ME","cnpj":"20.356.728/0001-68"},{"cod":"638","nome":"ARARUAMA","coverage":["ARARUAMA","SAQUAREMA","IGUABA GRANDE","SAO PEDRO DA ALDEIA","CABO FRIO","ARRAIAL DO CABO","ARMACAO DOS BUZIOS","SILVA JARDIM","RIO BONITO","CASIMIRO DE ABREU","MARICA"],"endereco":"RUA COLATINA, 23","bairro":"HAWAY","cidade":"ARARUAMA","estado":"RJ","cep":"28979-377","macro":"SUDESTE","micro":"REGIAO DOS LAGOS - RJ","razao":"FERNANCAR MECANICA E ELETRICA LTDA","cnpj":"29.444.575/0001-85"}],"system":[{"estado":"ALAGOAS","cidades":["MACEIO","SATUBA","MARECHAL DEODORO","RIO LARGO","PILAR","MESSIAS","BARRA DE SANTO ANTONIO","SAO MIGUEL DOS CAMPOS","SAO LUIS DO QUITUNDE","MURICI","CAPELA","FLEXEIRAS","MATRIZ DE CAMARAGIBE","BARRA DE SAO MIGUEL","PARIPUEIRA","MARAGOGI","SAO MIGUEL DOS MILAGRES","PORTO DE PEDRAS"]},{"estado":"BAHIA","cidades":["SALVADOR","ALAGOINHAS","AMELIA RODRIGUES","CACHOEIRA","CAMACARI","CATU","CONCEICAO DA FEIRA","CONCEICAO DO JACUIPE","CORACAO DE MARIA","CRUZ DAS ALMAS","DIAS DAVILA","ITAPARICA","LAURO DE FREITAS","MADRE DE DEUS","MARAGOGIPE","MATA DE SAO JOAO","MURITIBA","PIRAI","POJUCA","PRAIA DO FORTE","SANTO AMARO","SANTO ESTEVAO","SAUBARA","SAO FRANCISCO DO CONDE","SAO GONCALO DOS CAMPOS","SAO JOAO","SAO SEBASTIAO DO PASSE","SIMOES FILHO","TEODORO SAMPAIO","TERRA NOVA","VERA CRUZ"]},{"estado":"CEARA","cidades":["FORTALEZA","AQUIRAZ","BEBERIBE","CASCAVEL","CAUCAIA","EUSEBIO","HORIZONTE","ITAITINGA","MARACANAU","PACATUBA","PARAIPABA","PENTECOSTE","SAO GONCALO DO AMARANTE","SAO LUIS DO CURU","TRAIRI"]},{"estado":"DISTRITO FEDERAL","cidades":["BRASILIA","AGUAS CLARAS","BRAZLANDIA","CRUZEIRO","GAMA","GUARA","NUCLEO BANDEIRANTE","PARANOA","PLANALTINA","RIACHO FUNDO","RECANTO DAS EMAS","SAMAMBAIA","SANTA MARIA","SOBRADINHO","TAGUATINGA","VICENTE PIRES"]},{"estado":"GOIAS","cidades":["ABADIANIA","ANAPOLIS","APARECIDA DE GOIANIA","BELA VISTA DE GOIAS","CALDAZINHA","CATALAO","CUMARI","GOIANDIRA","GOIANIA","GUANAPOLIS","GUAPO","HIDROLANDIA","INHUMAS","LEOPOLDO DE BULHOES","NEROPOLIS","NOVA AURORA","OUVIDOR","PETROLINA DE GOIAS","PIRACANJUBA","PRENOPOLIS","SENADOR CANEDO","SILVANIA","TRES RANCHOS","TRINDADE","VIANOPOLIS"]},{"estado":"MATO GROSSO DO SUL","cidades":["CAMPO GRANDE","ANASTACIO","AQUIDAUANA","BANDEIRANTES","CAMAPUA","CORGUINHO","DOIS IRMAOS DO BURITI","DOURADOS","GUIA LOPES DA LAGUNA","JARAQUARI","MARACAJU","MIRANDA","RIBAS DO RIO PARDO","RIO BRILHANTE","RIO VERDE DE MATO GROSSO","SIDROLANDIA","TERENOS"]},{"estado":"MATO GROSSO","cidades":["CUIABA","VARZEA GRANDE","SANTO ANTONIO DO LEVERGER","NOSSA SENHORA DO LIVRAMENTO","CHAPADA DOS GUIMARAES","JANGADA","ACORIZAL","NOBRES","ROSARIO OESTE","POCONE","CACERES","RONDONOPOLIS","BARRA DO BUGRES","TANGARA DA SERRA","CAMPO VERDE","PRIMAVERA DO LESTE"]},{"estado":"MINAS GERAIS","cidades":["BELO HORIZONTE","BARBACENA","BARROSO","BETIM","BRUMADINHO","CAETE","CARANDAI","CONGONHAS","CONSELHEIRO LAFAIETE","CONTAGEM","CORONEL XAVIER CHAVES","DORES DE CAMPOS","ESMERALDAS","IBRITE","ICARAPE","JUATUBA","LAGOA DOURADA","LAGOA SANTA","LAVRAS","MARIANA","NOVA LIMA","OURO PRETO","PEDRO LEOPOLDO","PRADOS","RAPOSOS","RESENDE COSTA","RIBEIRAO DAS NEVES","SABARA","SANTA CRUZ DE MINAS","SANTA LUZIA","SAO JOAQUIM DE BICAS","SARZEDO","SETE LAGOAS","TIRADENTES","VESPASIANO"]},{"estado":"PARA","cidades":["BELEM","ANANINDEUA","MARITUBA","BENEVIDES","SANTA BARBARA DO PARA","SANTA ISABEL DO PARA","CASTANHAL","VIGIA","BARCARENA","ABAETETUBA","MOSQUEIRO","SOURE","SALVATERRA"]},{"estado":"PARAIBA","cidades":["JOAO PESSOA","ALAGOA GRANDE","ALAGOA NOVA","ALHANDRA","AREIA","AROEIRAS","BAYEUX","CABEDELO","CAAPORA","CAMPINA GRANDE","CONDE","CRUZ DO ESPIRITO SANTO","ESPERANCA","FAGUNDES","INGA","ITATIUBA","JURIPIRANGA","LAGOA SECA","MAMANGUAPE","MASSARANDUBA","PEDRAS DE FOGO","PILAR","PITIMBU","POCINHOS","PUXINANA","REMIGIO","RIO TINTO","SANTA RITA"]},{"estado":"PARANA","cidades":["CURITIBA","ALMIRANTE TAMANDARE","ANTONINA","ARAUCARIA","BOCAIUVA DO SUL","CAMPINA DO GRANDE DO SUL","CAMPO LARGO","CARAMBEI","CASCAVEL","CASTRO","COLOMBO","DEZ QUEDAS","DOIS VIZINHOS","FRANCISCO BELTRAO","FOZ DO IGUACU","GUAIRA","GUARANIACU","ILHEUS DO SUL","IMBITUVA","LAPA","MARECHAL CANDIDO RONDON","MATELANDIA","MEDIANEIRA","MORRETES","ORBELA","PACAEMBU","PALESTINA","PARANAGUA","PATO BRANCO","PONTA GROSSA","PORTO RICO","PRUDENTOPOLIS","QUATRO BARRAS","QUEDAS DO IGUACU","RIO BRANCO DO SUL","RIO NEGRO","SANTA FE DO OESTE","SANTA TEREZA DO OESTE","SAO JOSE DOS PINHAIS","SAO MIGUEL DO IGUACU","TAMARANA","TOLEDO","TRES BARRAS DO PARANA","TUPA","TUPASSI","VALPARAISO","WENCESLAU BRAZ"]},{"estado":"PERNAMBUCO","cidades":["RECIFE","ABREU E LIMA","CABO DE SANTO AGOSTINHO","CAMARAGIBE","CARPINA","ESCADA","GLORIA DO GOITA","GRAVATA","ILHA DE ITAMARACA","IGARASSU","JABOATAO","JABOATAO DOS GUARARAPES","MORENO","OLINDA","PAULISTA","PEDRAS DE FOGO","POJUCA","RIO TINTO","SAO LOURENCO DA MATA","VITORIA DE SANTO ANTAO"]},{"estado":"PIAUI","cidades":["TERESINA","AGUA BRANCA","ALTOS","ALTO LONGA","BENEDITINOS","CAMPO MAIOR","JOSE DE FREITAS","MIGUEL LEAO","MONSENHOR GIL","NAZARIA","PARNARAMA","SAO PEDRO DO PIAUI","TIMON","UNIAO"]},{"estado":"RIO DE JANEIRO","cidades":["RIO DE JANEIRO","ANGRA DOS REIS","ARMACAO DOS BUZIOS","ARARUAMA","ARRAIAL DO CABO","BARRA DE SAO JOAO","BELFORD ROXO","CABO FRIO","CAXIAS","CASIMIRO DE ABREU","DUQUE DE CAXIAS","IGUABA GRANDE","ITABORAI","MAGE","MARICA","NITEROI","RIO DAS OSTRAS","SAQUAREMA","SAO GONCALO","SAO JOAO DE MERITI","SAO PEDRO DA ALDEIA","SILVA"]},{"estado":"RIO GRANDE DO NORTE","cidades":["NATAL","ACU","AREIA BRANCA","AREZ","BARAUNA","BREJINHO","CAICO","CARAUBAS","CATOLE DO ROCHA","CEARA-MIRIM","CURRAIS NOVOS","EXTREMOZ","GOIANINHA","GOVERNADOR DIX-SEPT ROSADO","GROSSOS","IELHEUS","IGUABA GRANDE","ILHA DE ITAMARACA","IPANGUACU","JARDIM DE PIRANHAS","JARDIM DO SERIDO","JAGUARIBE","JUCURUTU","LAGOA NOVA","MACAIBA","MACAU","MONTE ALEGRE","NISIA FLORESTA","PARAZINHO","PARELHAS","PARNAMIRIM","PATOS","PAU DOS FERROS","PENDENCIAS","POCO BRANCO","PUXINANA","RUSSA","SANTA LUZIA","SANTANA DO MATOS","SAO BENTO","SAO JOSE DE MIPIBU","SAO PAULO DO POTENGI","SAO PEDRO DO PIAUI","SITIO NOVO","TOUROS","VERA CRUZ"]},{"estado":"RIO GRANDE DO SUL","cidades":["PORTO ALEGRE","ALVORADA","ANTONIO PRADO","ARROIO DOS RATOS","BENTO GONCALVES","BOM JESUS","CACHOEIRINHA","CACHOEIRA DO SUL","CANELAS","CANOAS","CARSLOS BARBOSA CAXIAS DO SUL","ESTEIO","ESTANCIA VELHA","FARROUPILHA","FLORES DA CUNHA","GARIBALDI","GRAMADO","GRAVATAI","GUAIBA","IVOTI","MONTENEGRO","NOVO HAMBURGO","NOVA PETROPOLIS","NOVA SANTA RITA","PAROBE","PORTAO","SAPIRANGA","SAPUCAIA DO SUL","SAO LEOPOLDO","SAO MARCOS","SAO SEBASTIAO DO CAI","TRIUNFO","VERANOPOLIS","VIAMAO"]},{"estado":"SANTA CATARINA","cidades":["FLORIANOPOLIS","AGUAS MORNAS","ANTONIO CARLOS","APIUNA","ARANHADA","BARRA DOS COQUEIROS","BIGUACU","GOVERNADOR CELSO RAMOS","GUARUJA","ILHOTAS","IMBITUBA","ITAPIRANGA DA LUCIA","ITAPORANGA","ITAJUBA","ITAJUI","ITAPEMA","JARAGUA DO SUL","LAGES","LUIZ ALVES","MARUIM","NOSSA SENHORA DO SOCORRO","NOVA TRENTO","ORLEANS","PALHOCA","PAULO LOPES","PORTO BELO","SALGADO","SANTO AMARO","SAO CRISTOVAO","SAO JOAO DE ITAPERIU","SAO JOSE","SAO PEDRO DE ALCANTARA","SAO VICENTE","TIJUCAS","TUBARAO","TURVO"]},{"estado":"SAO PAULO","cidades":["ABADIANIA","AGUA BRANCA","AGUAI","AGUAS DA PRATA","AGUAS DE LINDOIA","AGUAS DE SAO PEDRO","AGUDOS","ALUMINIO","ALVARO DE CARVALHO","AMERICANA","AMERICO BRASILIENSE","AMPARO","ANALANDIA","ANGRA DOS REIS","ANITA GARIBALDI","APARECIDA","APARECIDA DO TABOADO","ARACATUBA","ARACOIABA DA SERRA","ARARAQUARA","ARARAS","ARAUJOS","ARCEBURGO","AREALVA","AREIA BRANCA","ARTUR NOGUEIRA","ARUJA","ASSIS","ATIBAIA","AVAI","AVARE","BAIRRO ALTO","BANDEIRANTES","BARBOSA","BARRA BONITA","BARRA DO CHAPA","BARRA DO TURVO","BARREIRAS","BARRETOS","BARRINHA","BARUERI","BATATAIS","BAURU","BEBEDOURO","BELA VISTA DE GOIAS","BELFORD ROXO","BENEDITINOS","BENTO DE ABREU","BERTIOGA","BILAC","BIRIGUI","BIRITIBA-MIRIM","BOA ESPERANCA DO SUL","BOFETE","BOM JESUS DOS PERDOES","BORA","BOREBI","BOTUCATU","BOTUJURU","BRAGANCA PAULISTA","BRAUNA","BREJO ALEGRE","BURITAMA","CABRALIA PAULISTA","CABREUVA","CACAPAVA","CACHOEIRA PAULISTA","CAETE","CAIEIRAS","CAJAMAR","CAJURU","CAMPINAS","CAMPO LIMPO PAULISTA","CAMPOS DO JORDAO","CAMPOS NOVOS PAULISTA","CANAS","CANDIDO MOTA","CAPELA DO ALTO","CAPIVARI","CARAGUATATUBA","CARAPICUIBA","CARDEAL","CASA BRANCA","CASIMIRO DE ABREU","CASSIA DOS COQUEIROS","CAXIAS","CEARA-MIRIM","CERQUILHO","CESARIO LANGE","CHARQUEADA","CLEMENTINA","CONCHAL","CONCHAS","CONTAGEM","COROADOS","CORUMBATAI","COSMOPOLIS","COTIA","CRAVINHOS","CRUZEIRO","CRUZALIA","CUBATAO","CUNHA","DESCALVADO","DIADEMA","DOBRADA","DOIS CORREGOS","DOURADO","DUMONT","DUQUE DE CAXIAS","ECHAPORA","ELIAS FAUSTO","EMBU DAS ARTES","EMBU-GUACU","ENGENHEIRO COELHO","ESPIRITO SANTO DO PINHAL","ESTANCIA","ESTIVA","EXTREMA","FERRAZ DE VASCONCELOS","FLOREAL","FLORINEA","FRANCISCO MORATO","FRANCO DA ROCHA","GABRIEL MONTEIRO","GARCA","GAVIAO PEIXOTO","GETULINA","GLICERIO","GOIANA","GUAIMBE","GUAIRA","GUARARAPES","GUARAREMA","GUARATINGUETA","GUARIBA","GUARUJA","GUARULHOS","HOLAMBRA","HORTOLANDIA","IBATE","IBIRAREMA","IGARACU DO TIETE","IGARAPE","IGARASSU","IGARATA","IGARATU","IGUAPE","ILHABELA","INDAIATUBA","INHUMAS","IPERO","IPEUNA","IRACEMAPOLIS","ITABORAI","ITANHAEM","ITAPECERICA DA SERRA","ITAPEMA","ITAPETININGA","ITAPIRA","ITAPIRANGA DA LUCIA","ITAPORANGA","ITAQUAQUECETUBA","ITARIRI","ITATIBA","ITATINGA","ITATUI","ITU","ITUPEVA","ITUPAVA","IVOTI","JABOTICABAL","JACAREI","JACUTINGA","JAGUARIUNA","JANDIRA","JARAGUA","JARINU","JAU","JOANOPOLIS","JORDANESIA","JOSE DE FREITAS","JUNDIAI","JUQUITIBA","JUSCELINO","JUTAI","LAGOA DOURADA","LAGOINHA","LARANJAL PAULISTA","LAVRAS","LEME","LENCOIS PAULISTA","LIMEIRA","LINDOIA","LORENA","LOURDES","LOUVEIRA","LUIZIANIA","LUPERCIO","LUTECIA","MAGE","MAIRINQUE","MAIRIPORA","MARACAI","MARICA","MARILIA","MATAO","MAUA","MIGUEL LEAO","MOGI DAS CRUZES","MOGI GUACU","MOGI MIRIM","MONGAGUA","MONSENHOR GIL","MONTE ALEGRE DO SUL","MONTE MOR","MONTEIRO LOBATO","MORUNGABA","MOTUCA","NANTES","NATIVIDADE DA SERRA","NAZARE PAULISTA","NEROPOLIS","NITEROI","NOVA ODESSA","NOVA VENEZA","NUCLEO BANDEIRANTE","OCAUCU","OLINDA","ORLANDIA","OSASCO","OURINHOS","PALMITAL","PARAGUACU","PARAIBUNA","PARDINHO","PATROCINIO PAULISTA","PAULINIA","PEDERNEIRAS","PEDRAS DE FOGO","PEDREIRA","PEDRINHAS PAULISTA","PEDRO DE TOLEDO","PENAPOLIS","PERUIBE","PIACATU","PIEDADE","PINDAMONHANGABA","PINHALZINHO","PIRACAIA","PIRACICABA","PIRAJU","PIRAPORA DO BOM JESUS","PIRATININGA","PLATINA","POA","POMPEIA","PORTO FELIZ","POTIM","PRAIA GRANDE","PRATANIA","QUATA","QUELUZ","RAPOSOS","RECIFE","REDENCAO DA SERRA","RIBEIRAO BONITO","RIBEIRAO PIRES","RIBEIRAO PRETO","RINCAO","RIO CLARO","RIO DAS PEDRAS","RIO DE JANEIRO","RIO GRANDE DA SERRA","ROSALIA","ROSEIRA","SABARA","SALESOPOLIS","SALTO","SALTO DE PIRAPORA","SANTA BARBARA DOESTE","SANTA BRANCA","SANTA CRUZ DAS PALMEIRAS","SANTA GERTRUDES","SANTA ISABEL","SANTA LUZIA","SANTA MARIA DA SERRA","SANTANA DE PARNAIBA","SANTO ANDRE","SANTO ANTONIO ARACANGUA","SANTO ANTONIO DE POSSE","SANTOPOLIS DO AGUAPEI","SANTOS","SAO BENTO DO SAPUCAI","SAO BERNARDO DO CAMPO","SAO CAETANO DO SUL","SAO CARLOS","SAO JOSE DO RIO PARDO","SAO JOSE DOS CAMPOS","SAO LOURENCO DA SERRA","SAO LUIS DO PARAITINGA","SAO MANUEL","SAO PAULO","SAO PEDRO","SAO PEDRO DO PIAUI","SAO ROQUE","SAO SEBASTIAO","SAO SEBASTIAO DO PARAISO","SAO VICENTE","SAPUCAIA DO SUL","SAQUAREMA","SARZEDO","SENADOR CANEDO","SERRA NEGRA","SERRANA","SETE LAGOAS","SILVA","SILVEIRAS","SOCORRO","SOROCABA","SUMARE","SUZANO","TABOAO DA SERRA","TAQUARITINGA","TARUMA","TATUI","TAUBATE","TERRA PRETA","TIETE","TIMON","TIRADENTES","TORRINHA","TREMEMBE","TUIUTI","UBATUBA","UNIAO","VALINHOS","VALPARAISO","VARGEM GRANDE PAULISTA","VARGEM PAULISTA","VARZEA PAULISTA","VERA CRUZ","VESPASIANO","VINHEDO","VITORIA DE SANTO ANTAO","VOTORANTIM","ZACARIAS."]}]};
@@ -657,10 +675,14 @@ function haversineKm(a,b){
 }
 let geoCache = (()=>{ try{return JSON.parse(localStorage.getItem("oficinas_geocache")||"{}")}catch(e){return {}} })();
 function saveGeoCache(){ try{localStorage.setItem("oficinas_geocache",JSON.stringify(geoCache))}catch(e){} }
-async function fetchJSON(url){
-  const r = await fetch(url,{headers:{"Accept":"application/json"}});
-  if(!r.ok) throw new Error("HTTP "+r.status);
-  return r.json();
+async function fetchJSON(url, timeoutMs){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), timeoutMs||8000);
+  try{
+    const r = await fetch(url,{headers:{"Accept":"application/json"}, signal:ctrl.signal});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
 }
 // geocoder can be overridden for tests
 let _geocoder = null;
@@ -768,6 +790,173 @@ async function checkByAddress(){
   }finally{ btn.disabled=false; btn.innerHTML=orig; }
 }
 
+/* ============================ BATCH: VALIDAR PLANILHA ============================ */
+let _srcBuffer = null;                 // ArrayBuffer da planilha carregada (p/ reexportar preservando o original)
+let MUNI_LIST = [];                    // [normName, properName, uf, lat, lon]
+let MUNI_INDEX = new Map();            // "NORM|UF" -> {proper, lat, lon}
+function initMunicipios(){
+  if(!window.MUNICIPIOS || !window.MUNICIPIOS.length) return;
+  MUNI_LIST = window.MUNICIPIOS;
+  MUNI_INDEX = new Map();
+  for(const m of MUNI_LIST) MUNI_INDEX.set(m[0]+"|"+m[2], {proper:m[1], lat:m[3], lon:m[4]});
+}
+// ponto da oficina: CEP (online) preferencial; centro da cidade (offline) como reserva
+async function workshopPoint(w){
+  const cep = cleanCEP(w.cep);
+  if(cep){
+    try{
+      const j = await fetchJSON("https://brasilapi.com.br/api/cep/v2/"+cep, 6000);
+      const c = j && j.location && j.location.coordinates;
+      if(c && c.latitude) return {lat:+c.latitude, lon:+c.longitude, src:"CEP"};
+    }catch(e){}
+  }
+  const m = MUNI_INDEX.get(norm(w.cidade)+"|"+(w.estado||""));
+  if(m) return {lat:m.lat, lon:m.lon, src:"cidade"};
+  return null;
+}
+// municípios dentro do raio -> Map(uf -> Map(norm -> proper))
+function computeCoverage(points){
+  const byUF = new Map();
+  for(const m of MUNI_LIST){
+    const pt={lat:m[3], lon:m[4]};
+    let hit=false;
+    for(const p of points){ if(haversineKm(pt,p)<=RADIUS_KM){ hit=true; break; } }
+    if(hit){
+      if(!byUF.has(m[2])) byUF.set(m[2], new Map());
+      byUF.get(m[2]).set(m[0], m[1]);
+    }
+  }
+  return byUF;
+}
+async function generateValidatedXLSX(){
+  const box = $("#batchResult"); const btn = $("#batchBtn");
+  if(typeof XLSX==="undefined"){ toast("Leitor de planilha indisponível (sem internet)."); return; }
+  if(!MUNI_LIST.length){ toast("Base de municípios não carregada."); return; }
+  const active = state.workshops.filter(w=>w.active);
+  box.className="result show"; box.removeAttribute("style");
+  if(!active.length){ box.className="result show no"; box.innerHTML="<h3>❌ Nenhuma oficina ativa</h3><div>Ative ao menos uma oficina.</div>"; return; }
+  btn.disabled=true;
+  try{
+    const src={CEP:0, cidade:0}; let done=0;
+    box.innerHTML=`<div class="hint">📍 Localizando oficinas (0/${active.length})…</div>`;
+    const geos = await mapPool(active, 8, async w=>{
+      const p = await workshopPoint(w);
+      done++; box.innerHTML=`<div class="hint">📍 Localizando oficinas (${done}/${active.length})…</div>`;
+      return p;
+    });
+    const points = geos.filter(Boolean);
+    points.forEach(p=>{ src[p.src]=(src[p.src]||0)+1; });
+    if(!points.length){ box.className="result show no"; box.innerHTML="<h3>❌ Não foi possível localizar as oficinas</h3>"; return; }
+    box.innerHTML='<div class="hint">📐 Calculando distâncias para '+MUNI_LIST.length.toLocaleString('pt-BR')+' municípios…</div>';
+    await sleep(20);
+    const coverage = computeCoverage(points);
+    const d=new Date();
+    const pref = String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0");
+    const sysByState = new Map(state.system.map(s=>[s.estado, s.cidades]));
+    const order = state.system.map(s=>s.estado);
+    const extra = [];
+    coverage.forEach((_,uf)=>{ const full = UF_NAME[uf]||uf; if(!sysByState.has(full)) extra.push(full); });
+    extra.sort().forEach(f=>order.push(f));
+    const results = new Map(); let totInc=0, totRem=0, totNao=0;
+    for(const estado of order){
+      const uf = NAME_UF[estado] || "";
+      const covered = coverage.get(uf) || new Map();
+      const cidades = sysByState.get(estado) || [];
+      const sysNorm = new Map(cidades.map(c=>[norm(c), c]));
+      const incluir=[], retirar=[], nao=[];
+      covered.forEach((proper, nkey)=>{ if(!sysNorm.has(nkey)) incluir.push(`${pref} - ${proper} (${uf})`); });
+      sysNorm.forEach((orig, nkey)=>{
+        if(!MUNI_INDEX.has(nkey+"|"+uf)){ nao.push(orig); return; }   // não localizada -> mantém
+        if(!covered.has(nkey)) retirar.push(`${pref} - ${orig} (${uf})`);
+      });
+      results.set(estado, {incluir, retirar, nao, cidades, isNew:!sysByState.has(estado)});
+      totInc+=incluir.length; totRem+=retirar.length; totNao+=nao.length;
+    }
+    const wb = buildWorkbook(results, order);
+    const base = /\.xlsx?$/i.test(state.baseLabel) ? state.baseLabel.replace(/\.xlsx?$/i,"") : "planilha";
+    const fname = base+"_atualizada.xlsx";
+    XLSX.writeFile(wb, fname);
+    box.className="result show ok";
+    box.innerHTML = `<h3>✅ Planilha gerada</h3>
+      <div>Oficinas localizadas: <b>${points.length}</b> (${src.CEP||0} por CEP, ${src.cidade||0} pelo centro da cidade).</div>
+      <ul>
+        <li><b>${totInc}</b> cidades a <b style="color:var(--good-ink)">incluir</b></li>
+        <li><b>${totRem}</b> cidades a <b style="color:var(--crit-ink)">retirar</b></li>
+        ${totNao?`<li>${totNao} cidade(s) do sistema não encontradas na base de municípios (mantidas — revise o nome).</li>`:''}
+      </ul>
+      <div class="hint">Arquivo <b>${esc(fname)}</b> baixado. A aba <b>Sistemas</b> foi atualizada com as colunas Incluir e Retirar (formato <code>${pref} - Cidade (UF)</code>).</div>`;
+  }catch(e){
+    box.className="result show no";
+    box.innerHTML=`<h3>⚠️ Erro ao gerar a planilha</h3><div>${esc(e.message)}</div>`;
+  }finally{ btn.disabled=false; }
+}
+function colOf(ws, range, names){
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=ws[XLSX.utils.encode_cell({r:range.s.r,c})];
+    if(cell && cell.v!=null && names.includes(norm(cell.v))) return c;
+  }
+  return -1;
+}
+function setCell(ws, r, c, val){ ws[XLSX.utils.encode_cell({r,c})] = {t:"s", v:val}; }
+function updateSistemasSheet(ws, results, order){
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  const hr = range.s.r;
+  let estCol = colOf(ws, range, ["ESTADO"]); if(estCol<0) estCol=0;
+  let cidCol = colOf(ws, range, ["CIDADES","CIDADE"]); if(cidCol<0) cidCol=estCol+1;
+  let incCol = colOf(ws, range, ["INCLUIR"]); if(incCol<0) incCol=3;
+  let remCol = colOf(ws, range, ["RETIRAR"]); if(remCol<0) remCol=4;
+  setCell(ws, hr, incCol, "Incluir"); setCell(ws, hr, remCol, "Retirar");
+  const byName = new Map(); results.forEach((v,k)=>byName.set(norm(k), v));
+  const written = new Set();
+  let lastDataR = hr;
+  for(let r=hr+1;r<=range.e.r;r++){
+    const ec = ws[XLSX.utils.encode_cell({r,c:estCol})];
+    if(!ec || ec.v==null || ec.v==="") continue;
+    lastDataR = r;
+    const key = norm(ec.v); const res = byName.get(key); if(!res) continue;
+    setCell(ws, r, incCol, res.incluir.join("\n"));
+    setCell(ws, r, remCol, res.retirar.join("\n"));
+    written.add(key);
+  }
+  // acrescenta linhas para estados cobertos que não existiam na aba (logo após a última linha preenchida)
+  let lastR = lastDataR;
+  (order||[]).forEach(estado=>{
+    if(written.has(norm(estado))) return;
+    const res = byName.get(norm(estado)); if(!res) return;
+    lastR++;
+    setCell(ws, lastR, estCol, estado);
+    setCell(ws, lastR, cidCol, (res.cidades||[]).join(", "));
+    setCell(ws, lastR, incCol, res.incluir.join("\n"));
+    setCell(ws, lastR, remCol, res.retirar.join("\n"));
+    written.add(norm(estado));
+  });
+  const endC = Math.max(range.e.c, cidCol, incCol, remCol);
+  ws["!ref"] = XLSX.utils.encode_range({s:range.s, e:{r:lastR, c:endC}});
+}
+function reconstructWorkbook(results, order){
+  const wb = XLSX.utils.book_new();
+  const regAoa = [["CÓD WEBCAPS","CAPS","REGIÕES DE ABRANGÊNCIA","ENDERECO","BAIRRO","CIDADE","ESTADO","CEP","MACRO REGIÕES","MICRO REGIÕES","RAZAO SOCIAL","CNPJ"]];
+  state.workshops.forEach(w=>regAoa.push([w.cod||"",w.nome,(w.coverage||[]).join(", "),w.endereco||"",w.bairro||"",w.cidade||"",w.estado||"",w.cep||"",w.macro||"",w.micro||"",w.razao||"",w.cnpj||""]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(regAoa), "Regiões");
+  const sysAoa = [["Estado","Cidades","","Incluir","Retirar"]];
+  (order || Array.from(results.keys())).forEach(estado=>{
+    const r = results.get(estado) || {incluir:[],retirar:[],cidades:[]};
+    sysAoa.push([estado, (r.cidades||[]).join(", "), "", r.incluir.join("\n"), r.retirar.join("\n")]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sysAoa), "Sistemas");
+  return wb;
+}
+function buildWorkbook(results, order){
+  if(_srcBuffer){
+    try{
+      const wb = XLSX.read(_srcBuffer, {type:"array"});
+      const sysName = wb.SheetNames.find(n=>norm(n).includes("SISTEMA")) || wb.SheetNames[1] || wb.SheetNames[0];
+      if(wb.Sheets[sysName]){ updateSistemasSheet(wb.Sheets[sysName], results, order); return wb; }
+    }catch(e){}
+  }
+  return reconstructWorkbook(results, order);
+}
+
 /* ============================ EXPORT ============================ */
 function exportCSV(){
   const diff = computeDiff();
@@ -799,6 +988,7 @@ function importXLSX(file){
   const reader = new FileReader();
   reader.onload = e=>{
     try{
+      _srcBuffer = e.target.result;
       const wb = XLSX.read(e.target.result,{type:"array"});
       // Regiões sheet
       const regName = wb.SheetNames.find(n=>norm(n).includes("REGIO")) || wb.SheetNames[0];
@@ -877,6 +1067,7 @@ function bind(){
     $("#chkResult").className="result";
   });
   $("#exportBtn").addEventListener("click", exportCSV);
+  $("#batchBtn").addEventListener("click", generateValidatedXLSX);
   $("#fileInput").addEventListener("change", e=>{ if(e.target.files[0]) importXLSX(e.target.files[0]); e.target.value=""; });
   $("#resetBtn").addEventListener("click", ()=>{
     if(!confirm("Descartar todas as alterações e voltar à base carregada?")) return;
@@ -903,7 +1094,7 @@ function bind(){
 (function init(){
   const th = (()=>{try{return localStorage.getItem("oficinas_theme")}catch(e){return null}})();
   if(th) document.documentElement.setAttribute("data-theme",th);
-  initSelects(); bind();
+  initSelects(); bind(); initMunicipios();
   if(!restore()) loadBase(BASE_DATA,"planilha padrão");
   renderAll();
 })();

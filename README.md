@@ -30,6 +30,7 @@ Vá ao painel **🔎 Verificador de cobertura do cliente** (rodapé). Há dois m
 | **Atualizações no sistema** | Compara as cidades elegíveis com as já cadastradas e mostra, por estado, o que **incluir** (passou a ter cobertura) e o que **retirar** (deixou de ter oficina no raio). |
 | **Cidades elegíveis** | Lista, por estado, todas as cidades cobertas por alguma oficina ativa. |
 | **Verificador de cliente** | Consulta pelo **CEP de pernoite da apólice** (distância real ao raio de 50 km, online) ou por **cidade** (offline). |
+| **Validar e atualizar a planilha** | Processa a planilha em lote: calcula a distância real (raio de 50 km) entre **cada município do Brasil** e as oficinas ativas e devolve a **mesma planilha** com a aba **Sistemas** atualizada — colunas **Incluir** (município no raio ainda não cadastrado) e **Retirar** (cidade do sistema fora do raio), no formato `DD/MM - Cidade (UF)`. |
 | **Carregar planilha** | Importa a planilha base (`.xlsx`) com as abas **Regiões** e **Sistemas**. |
 | **Exportar** | Baixa um CSV com as ações (incluir/retirar) e a lista de cidades elegíveis. |
 
@@ -61,4 +62,14 @@ posição são toleradas.
 ```
 index.html               # o dashboard (dados base embutidos)
 vendor/xlsx.full.min.js  # leitor de .xlsx (SheetJS) — para funcionar offline
+data/municipios.js       # coordenadas dos 5.570 municípios do Brasil (cálculo de distância offline)
 ```
+
+## Como a distância real é calculada
+
+1. **Coordenadas da oficina:** o CEP de cada oficina é geolocalizado (BrasilAPI); se estiver
+   offline ou o CEP não retornar coordenadas, usa-se o centro da cidade da oficina.
+2. **Coordenadas das cidades:** vêm da base local `data/municipios.js` (IBGE), então não
+   dependem de internet.
+3. **Distância:** fórmula de **Haversine** (distância em linha reta sobre a esfera terrestre)
+   entre os dois pontos. Cidade elegível = distância ≤ 50 km de alguma oficina ativa.
