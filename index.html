@@ -814,6 +814,12 @@ async function workshopPoint(w){
   if(m) return {lat:m.lat, lon:m.lon, src:"cidade"};
   return null;
 }
+// oficina mais próxima de um ponto -> {dist(km), nome}
+function nearestWorkshop(pt, points){
+  let best=null, bd=Infinity;
+  for(const p of points){ const d=haversineKm(pt,p); if(d<bd){ bd=d; best=p; } }
+  return best ? {dist:bd, nome:best.nome||""} : {dist:Infinity, nome:""};
+}
 // municípios dentro do raio -> Map(uf -> Map(norm -> proper))
 function computeCoverage(points){
   const byUF = new Map();
@@ -841,6 +847,7 @@ async function generateValidatedXLSX(){
     box.innerHTML=`<div class="hint">📍 Localizando oficinas (0/${active.length})…</div>`;
     const geos = await mapPool(active, 8, async w=>{
       const p = await workshopPoint(w);
+      if(p) p.nome = w.nome;
       done++; box.innerHTML=`<div class="hint">📍 Localizando oficinas (${done}/${active.length})…</div>`;
       return p;
     });
@@ -858,21 +865,34 @@ async function generateValidatedXLSX(){
     coverage.forEach((_,uf)=>{ const full = UF_NAME[uf]||uf; if(!sysByState.has(full)) extra.push(full); });
     extra.sort().forEach(f=>order.push(f));
     const results = new Map(); let totInc=0, totRem=0, totNao=0;
+    const conf = [["Estado","Cidade","UF","Distância até a oficina mais próxima (km)","Oficina mais próxima","Situação","Ação sugerida"]];
+    const rnd = d => (isFinite(d) ? Math.round(d*10)/10 : "");
     for(const estado of order){
       const uf = NAME_UF[estado] || "";
       const covered = coverage.get(uf) || new Map();
       const cidades = sysByState.get(estado) || [];
       const sysNorm = new Map(cidades.map(c=>[norm(c), c]));
       const incluir=[], retirar=[], nao=[];
-      covered.forEach((proper, nkey)=>{ if(!sysNorm.has(nkey)) incluir.push(`${pref} - ${proper} (${uf})`); });
+      // cidades já no sistema: valida cada uma
       sysNorm.forEach((orig, nkey)=>{
-        if(!MUNI_INDEX.has(nkey+"|"+uf)){ nao.push(orig); return; }   // não localizada -> mantém
-        if(!covered.has(nkey)) retirar.push(`${pref} - ${orig} (${uf})`);
+        const m = MUNI_INDEX.get(nkey+"|"+uf);
+        if(!m){ nao.push(orig); conf.push([estado, orig, uf, "", "", "Não localizada na base", "Manter (revisar nome)"]); return; }
+        const nr = nearestWorkshop({lat:m.lat, lon:m.lon}, points);
+        if(covered.has(nkey)) conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Manter"]);
+        else { retirar.push(`${pref} - ${orig} (${uf})`); conf.push([estado, orig, uf, rnd(nr.dist), nr.nome, "Fora do raio (>50 km)", "Retirar"]); }
+      });
+      // municípios no raio que ainda não estão no sistema: incluir
+      covered.forEach((proper, nkey)=>{
+        if(sysNorm.has(nkey)) return;
+        incluir.push(`${pref} - ${proper} (${uf})`);
+        const m = MUNI_INDEX.get(nkey+"|"+uf);
+        const nr = m ? nearestWorkshop({lat:m.lat, lon:m.lon}, points) : {dist:Infinity, nome:""};
+        conf.push([estado, proper, uf, rnd(nr.dist), nr.nome, "Elegível (≤50 km)", "Incluir"]);
       });
       results.set(estado, {incluir, retirar, nao, cidades, isNew:!sysByState.has(estado)});
       totInc+=incluir.length; totRem+=retirar.length; totNao+=nao.length;
     }
-    const wb = buildWorkbook(results, order);
+    const wb = buildWorkbook(results, order, conf);
     const base = /\.xlsx?$/i.test(state.baseLabel) ? state.baseLabel.replace(/\.xlsx?$/i,"") : "planilha";
     const fname = base+"_atualizada.xlsx";
     XLSX.writeFile(wb, fname);
@@ -884,7 +904,7 @@ async function generateValidatedXLSX(){
         <li><b>${totRem}</b> cidades a <b style="color:var(--crit-ink)">retirar</b></li>
         ${totNao?`<li>${totNao} cidade(s) do sistema não encontradas na base de municípios (mantidas — revise o nome).</li>`:''}
       </ul>
-      <div class="hint">Arquivo <b>${esc(fname)}</b> baixado. A aba <b>Sistemas</b> foi atualizada com as colunas Incluir e Retirar (formato <code>${pref} - Cidade (UF)</code>).</div>`;
+      <div class="hint">Arquivo <b>${esc(fname)}</b> baixado. A aba <b>Sistemas</b> foi atualizada (Incluir/Retirar, formato <code>${pref} - Cidade (UF)</code>) e a aba <b>Conferência</b> traz cada cidade com a distância em km até a oficina mais próxima.</div>`;
   }catch(e){
     box.className="result show no";
     box.innerHTML=`<h3>⚠️ Erro ao gerar a planilha</h3><div>${esc(e.message)}</div>`;
@@ -946,15 +966,29 @@ function reconstructWorkbook(results, order){
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sysAoa), "Sistemas");
   return wb;
 }
-function buildWorkbook(results, order){
+function addConferenciaSheet(wb, conf){
+  if(!conf || conf.length<=1) return;
+  const name = "Conferência";
+  if(wb.SheetNames.includes(name)){                 // substitui se já existir
+    delete wb.Sheets[name];
+    wb.SheetNames = wb.SheetNames.filter(n=>n!==name);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(conf);
+  ws["!cols"] = [{wch:20},{wch:26},{wch:5},{wch:14},{wch:24},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws, name);
+}
+function buildWorkbook(results, order, conf){
+  let wb = null;
   if(_srcBuffer){
     try{
-      const wb = XLSX.read(_srcBuffer, {type:"array"});
-      const sysName = wb.SheetNames.find(n=>norm(n).includes("SISTEMA")) || wb.SheetNames[1] || wb.SheetNames[0];
-      if(wb.Sheets[sysName]){ updateSistemasSheet(wb.Sheets[sysName], results, order); return wb; }
+      const w = XLSX.read(_srcBuffer, {type:"array"});
+      const sysName = w.SheetNames.find(n=>norm(n).includes("SISTEMA")) || w.SheetNames[1] || w.SheetNames[0];
+      if(w.Sheets[sysName]){ updateSistemasSheet(w.Sheets[sysName], results, order); wb = w; }
     }catch(e){}
   }
-  return reconstructWorkbook(results, order);
+  if(!wb) wb = reconstructWorkbook(results, order);
+  addConferenciaSheet(wb, conf);
+  return wb;
 }
 
 /* ============================ EXPORT ============================ */

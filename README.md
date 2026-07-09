@@ -30,7 +30,7 @@ Vá ao painel **🔎 Verificador de cobertura do cliente** (rodapé). Há dois m
 | **Atualizações no sistema** | Compara as cidades elegíveis com as já cadastradas e mostra, por estado, o que **incluir** (passou a ter cobertura) e o que **retirar** (deixou de ter oficina no raio). |
 | **Cidades elegíveis** | Lista, por estado, todas as cidades cobertas por alguma oficina ativa. |
 | **Verificador de cliente** | Consulta pelo **CEP de pernoite da apólice** (distância real ao raio de 50 km, online) ou por **cidade** (offline). |
-| **Validar e atualizar a planilha** | Processa a planilha em lote: calcula a distância real (raio de 50 km) entre **cada município do Brasil** e as oficinas ativas e devolve a **mesma planilha** com a aba **Sistemas** atualizada — colunas **Incluir** (município no raio ainda não cadastrado) e **Retirar** (cidade do sistema fora do raio), no formato `DD/MM - Cidade (UF)`. |
+| **Validar e atualizar a planilha** | Processa a planilha em lote: calcula a distância real (raio de 50 km) entre **cada município do Brasil** e as oficinas ativas e devolve a **mesma planilha** com a aba **Sistemas** atualizada — colunas **Incluir** (município no raio ainda não cadastrado) e **Retirar** (cidade do sistema fora do raio), no formato `DD/MM - Cidade (UF)`. Adiciona ainda a aba **Conferência**, com uma cidade por linha: distância (km) até a oficina mais próxima, nome da oficina, situação e ação sugerida — ótima para auditar/ordenar no Excel. |
 | **Carregar planilha** | Importa a planilha base (`.xlsx`) com as abas **Regiões** e **Sistemas**. |
 | **Exportar** | Baixa um CSV com as ações (incluir/retirar) e a lista de cidades elegíveis. |
 
