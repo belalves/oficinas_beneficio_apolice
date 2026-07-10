@@ -1196,7 +1196,7 @@ function bind(){
   const th = (()=>{try{return localStorage.getItem("oficinas_theme")}catch(e){return null}})();
   if(th) document.documentElement.setAttribute("data-theme",th);
   initSelects(); bind(); initMunicipios();
-  try{ if(localStorage.getItem("oficinas_syscollapsed")==="1") toggleSysCard(true); }catch(e){}
+  try{ if(localStorage.getItem("oficinas_syscollapsed")!=="0") toggleSysCard(true); }catch(e){ toggleSysCard(true); }
   if(!restore()) loadBase(BASE_DATA,"planilha padrão");
   renderAll();
 })();

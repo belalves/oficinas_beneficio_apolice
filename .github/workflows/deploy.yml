@@ -4,7 +4,7 @@ name: Publicar no GitHub Pages
 # e permite rodar manualmente pelo botão "Run workflow" na aba Actions.
 on:
   push:
-    branches: ["claude/workshop-coverage-dashboard-klox0x"]
+    branches: ["main", "claude/workshop-coverage-dashboard-klox0x"]
   workflow_dispatch:
 
 # Permissões necessárias para o deploy no Pages.
